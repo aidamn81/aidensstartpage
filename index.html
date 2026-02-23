@@ -5,118 +5,63 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Gothic Archive</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Playfair+Display&display=swap" rel="stylesheet">
-    
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
     <style>
-        :root { 
-            --obsidian: #050505; 
-            --crimson: #7a0000; 
-            --gold: #8c7340; 
-            --text: #a19a89; 
-        }
-
+        :root { --obsidian: #050505; --crimson: #7a0000; --gold: #8c7340; --text: #a19a89; }
         body {
             background-color: var(--obsidian);
             background-image: linear-gradient(rgba(0,0,0,0.97), rgba(0,0,0,0.97)), 
                               url('https://www.transparenttextures.com/patterns/dark-brick-wall.png');
-            color: var(--text); 
-            font-family: 'Playfair Display', serif;
-            margin: 0; min-height: 100vh; 
-            display: flex; flex-direction: column; align-items: center;
+            color: var(--text); font-family: 'Playfair Display', serif;
+            margin: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center;
         }
 
-        /* Top Bar Controls */
-        #top-controls { 
-            width: 100%; padding: 10px 20px; 
-            display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 1px solid #1a1a1a; background: #000; box-sizing: border-box; 
-        }
-
-        #status-text { font-family: 'Cinzel'; font-size: 0.75rem; color: var(--gold); }
-
-        /* Admin Desk */
+        #top-controls { width: 100%; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1a1a1a; background: #000; box-sizing: border-box; }
+        
+        /* Compact Admin Desk: Now half as narrow and centered */
         #admin-desk { 
-            display: none; padding: 20px; gap: 10px; flex-wrap: wrap; 
-            justify-content: center; border-bottom: 1px solid var(--crimson); 
-            width: 100%; background: #080808; 
+            display: none; padding: 15px; gap: 8px; flex-direction: column; 
+            align-items: center; border: 1px solid var(--crimson); 
+            width: 300px; /* Half-narrow constraint */
+            margin: 20px auto; background: #080808; border-radius: 4px;
         }
 
-        /* Relic Grid (Adjusted for smaller items) */
-        #archive-grid { 
-            display: grid; padding: 40px; 
-            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); 
-            gap: 30px; width: 95%; 
-        }
+        #archive-grid { display: grid; padding: 40px; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 30px; width: 95%; }
 
-        .relic-wrapper { 
-            display: flex; flex-direction: column; align-items: center; 
-            position: relative; cursor: pointer;
-            -webkit-touch-callout: none; user-select: none;
-        }
-
-        /* Relic Frame (1/4 Smaller: 82x108) */
-        .relic-frame { 
-            width: 82px; height: 108px; 
-            border: 1px solid var(--crimson); 
-            background: #000; overflow: hidden; 
-            transition: 0.3s ease-in-out;
-        }
-
-        .relic-frame:hover {
-            box-shadow: 0 0 15px var(--crimson);
-            border-color: var(--gold);
-        }
-
+        .relic-wrapper { display: flex; flex-direction: column; align-items: center; position: relative; cursor: pointer; -webkit-touch-callout: none; user-select: none; }
+        .relic-frame { width: 82px; height: 108px; border: 1px solid var(--crimson); background: #000; overflow: hidden; transition: 0.3s; }
         .relic-frame img { width: 100%; height: 100%; object-fit: cover; }
+        .relic-name { margin-top: 8px; font-family: 'Cinzel'; font-size: 0.65rem; text-align: center; max-width: 90px; }
 
-        .relic-name { 
-            margin-top: 8px; font-family: 'Cinzel'; 
-            font-size: 0.65rem; text-align: center; 
-            max-width: 90px; line-height: 1.2;
-        }
+        /* Folder Specific Styling */
+        .relic-frame.folder-icon { border-style: double; border-width: 3px; border-color: var(--gold); position: relative; }
+        .relic-frame.folder-icon::after { content: ""; position: absolute; top: 0; left: 0; width: 30%; height: 10px; background: var(--gold); }
 
-        /* Context Menu */
-        #context-menu { 
-            display: none; position: fixed; z-index: 2000; 
-            background: #0a0a0a; border: 1px solid var(--gold); 
-            padding: 5px; box-shadow: 0 0 30px #000; 
-        }
-
-        .menu-item { 
-            padding: 12px 25px; font-family: 'Cinzel'; font-size: 0.7rem; 
-            color: var(--gold); cursor: pointer; border-bottom: 1px solid #1a1a1a; 
-        }
+        #context-menu { display: none; position: fixed; z-index: 2000; background: #0a0a0a; border: 1px solid var(--gold); padding: 5px; box-shadow: 0 0 30px #000; }
+        .menu-item { padding: 12px 25px; font-family: 'Cinzel'; font-size: 0.7rem; color: var(--gold); cursor: pointer; border-bottom: 1px solid #1a1a1a; }
         .menu-item:hover { background: var(--crimson); color: white; }
 
-        /* UI Elements */
-        button { 
-            background: var(--crimson); color: white; border: none; 
-            padding: 8px 15px; cursor: pointer; font-family: 'Cinzel'; 
-            font-size: 0.7rem; transition: 0.3s; 
-        }
-        button:hover { background: #9a0000; }
-
-        input { 
-            background: #000; border: 1px solid #333; 
-            color: #fff; padding: 8px; font-family: inherit; 
-        }
-
-        .toggle-btn { background: transparent; border: 1px solid var(--gold); color: var(--gold); }
+        button { background: var(--crimson); color: white; border: none; padding: 8px 15px; cursor: pointer; font-family: 'Cinzel'; font-size: 0.7rem; width: 100%; }
+        input, select { background: #000; border: 1px solid #333; color: #fff; padding: 8px; font-family: inherit; width: 100%; box-sizing: border-box; }
+        .toggle-btn { background: transparent; border: 1px solid var(--gold); color: var(--gold); width: auto; }
+        #back-btn { display: none; margin: 10px; }
     </style>
 </head>
 <body>
 
     <div id="top-controls">
-        <span id="status-text">Disconnected</span>
+        <button id="back-btn" class="toggle-btn" onclick="goBack()">← Back</button>
+        <span id="status-text" style="font-family:'Cinzel'; font-size:0.7rem;">Archive</span>
         <button id="edit-toggle" class="toggle-btn">Edit Mode</button>
     </div>
 
     <section id="admin-desk">
-        <input type="text" id="r-name" placeholder="Relic Name">
-        <input type="text" id="r-url" placeholder="URL (https://...)">
+        <input type="text" id="r-name" placeholder="Name">
+        <input type="text" id="r-url" placeholder="URL (Leave blank for Folder)">
+        <select id="r-type"><option value="link">Link</option><option value="folder">Folder</option></select>
         <input type="file" id="r-file" accept="image/*">
         <button id="r-save">Commemorate</button>
     </section>
@@ -124,11 +69,11 @@
     <main id="archive-grid"></main>
 
     <div id="context-menu">
-        <div class="menu-item" onclick="menuAction('edit')">Edit Details</div>
+        <div class="menu-item" onclick="menuAction('edit')">Rename / Edit URL</div>
         <div class="menu-item" onclick="document.getElementById('hidden-file-input').click()">New Portrait</div>
+        <div class="menu-item" onclick="menuAction('move')">Move to Folder</div>
         <div class="menu-item" onclick="menuAction('delete')" style="color:var(--crimson);">Purge Relic</div>
     </div>
-
     <input type="file" id="hidden-file-input" style="display:none" accept="image/*">
 
     <script>
@@ -142,83 +87,69 @@
             appId: "1:984377659362:web:8cfe5e14e129fcae3273bb"
         };
 
-        const app = firebase.initializeApp(firebaseConfig);
+        firebase.initializeApp(firebaseConfig);
         const rtdb = firebase.database();
         const auth = firebase.auth();
         const MY_UID = "zrRGmp8WHDhK1h9T486PTqegdt12";
         
         let isEditMode = false;
         let selectedRelicId = null;
+        let currentFolder = 'root';
 
-        // --- AUTHENTICATION ---
         auth.onAuthStateChanged(user => {
-            if (user && user.uid === MY_UID) { 
-                document.getElementById('status-text').innerText = "Archive Connected";
-                loadRelics(); 
-            } else { 
+            if (user && user.uid === MY_UID) { loadRelics(); } 
+            else { 
                 const email = prompt("Custodian Email:");
                 const pass = prompt("Key:");
-                auth.signInWithEmailAndPassword(email, pass).catch(e => alert("Auth Failed: " + e.message));
+                auth.signInWithEmailAndPassword(email, pass).catch(e => alert(e.message));
             }
         });
 
-        // --- UI TOGGLE ---
         document.getElementById('edit-toggle').onclick = (e) => {
             isEditMode = !isEditMode;
             e.target.innerText = isEditMode ? "Lock Archive" : "Edit Mode";
             document.getElementById('admin-desk').style.display = isEditMode ? 'flex' : 'none';
         };
 
-        // --- CREATE RELIC ---
         document.getElementById('r-save').onclick = async () => {
             const name = document.getElementById('r-name').value;
             const url = document.getElementById('r-url').value;
+            const type = document.getElementById('r-type').value;
             const file = document.getElementById('r-file').files[0];
-            const btn = document.getElementById('r-save');
             
-            if(!name || !url) return alert("Scrolls are empty.");
-            btn.innerText = "Saving...";
-
-            const pushToDb = (imgStr) => {
+            if(!name) return;
+            
+            const pushData = (img) => {
                 rtdb.ref('relics').push({
-                    name: name,
-                    url: url,
-                    imgUrl: imgStr,
-                    timestamp: Date.now()
-                }, (error) => {
-                    if (error) {
-                        alert("Error: " + error.message);
-                        btn.innerText = "Retry";
-                    } else {
-                        btn.innerText = "Commemorated";
-                        document.getElementById('r-name').value = '';
-                        document.getElementById('r-url').value = '';
-                        setTimeout(() => btn.innerText = "Commemorate", 2000);
-                    }
+                    name, url: type === 'folder' ? '' : url, type,
+                    imgUrl: img, parent: currentFolder, timestamp: Date.now()
                 });
+                document.getElementById('r-name').value = '';
             };
 
             if(file) {
                 const reader = new FileReader();
-                reader.onload = (e) => pushToDb(e.target.result);
+                reader.onload = (e) => pushData(e.target.result);
                 reader.readAsDataURL(file);
-            } else {
-                pushToDb("");
-            }
+            } else { pushData(""); }
         };
 
-        // --- LOAD RELICS ---
         function loadRelics() {
             rtdb.ref('relics').on('value', snap => {
                 const grid = document.getElementById('archive-grid');
                 grid.innerHTML = '';
-                snap.forEach(child => {
-                    const d = child.val();
-                    const id = child.key;
+                const data = snap.val() || {};
+                
+                Object.keys(data).forEach(id => {
+                    const d = data[id];
+                    if (d.parent !== currentFolder) return;
+
                     const wrap = document.createElement('div');
                     wrap.className = 'relic-wrapper';
+                    const isFolder = d.type === 'folder';
+                    
                     wrap.innerHTML = `
-                        <div class="relic-frame">
+                        <div class="relic-frame ${isFolder ? 'folder-icon' : ''}">
                             ${d.imgUrl ? `<img src="${d.imgUrl}">` : ''}
                         </div>
                         <span class="relic-name">${d.name}</span>
@@ -226,15 +157,32 @@
                     
                     wrap.onmousedown = (e) => startPress(e, id);
                     wrap.ontouchstart = (e) => startPress(e, id);
-                    wrap.onmouseup = () => { if(!window.longPressed) window.open(d.url, '_blank'); clearTimeout(window.pTimer); };
-                    wrap.ontouchend = () => clearTimeout(window.pTimer);
-                    
+                    wrap.onmouseup = () => { 
+                        if(!window.longPressed) {
+                            if(isFolder) { enterFolder(id, d.name); }
+                            else { window.open(d.url, '_blank'); }
+                        }
+                        clearTimeout(window.pTimer); 
+                    };
                     grid.appendChild(wrap);
                 });
             });
         }
 
-        // --- LONG PRESS LOGIC ---
+        function enterFolder(id, name) {
+            currentFolder = id;
+            document.getElementById('status-text').innerText = name;
+            document.getElementById('back-btn').style.display = 'block';
+            loadRelics();
+        }
+
+        function goBack() {
+            currentFolder = 'root';
+            document.getElementById('status-text').innerText = "Archive";
+            document.getElementById('back-btn').style.display = 'none';
+            loadRelics();
+        }
+
         function startPress(e, id) {
             if(!isEditMode) return;
             window.longPressed = false;
@@ -243,36 +191,35 @@
                 window.longPressed = true; 
                 const menu = document.getElementById('context-menu');
                 menu.style.display = 'block';
-                // Adjust for touch vs mouse coords
-                const pageX = e.pageX || e.touches?.[0]?.pageX;
-                const pageY = e.pageY || e.touches?.[0]?.pageY;
-                menu.style.left = pageX + 'px';
-                menu.style.top = pageY + 'px';
+                menu.style.left = (e.pageX || e.touches?.[0]?.pageX) + 'px';
+                menu.style.top = (e.pageY || e.touches?.[0]?.pageY) + 'px';
             }, 700);
         }
 
         window.onclick = () => document.getElementById('context-menu').style.display = 'none';
 
-        // --- MENU ACTIONS ---
         window.menuAction = (type) => {
-            if (type === 'delete' && confirm("Purge this relic from the history?")) {
-                rtdb.ref('relics/' + selectedRelicId).remove();
-            }
+            if (type === 'delete' && confirm("Purge this relic?")) rtdb.ref('relics/' + selectedRelicId).remove();
             if (type === 'edit') {
                 const n = prompt("New Name:"), u = prompt("New URL:");
-                if(n && u) rtdb.ref('relics/' + selectedRelicId).update({ name: n, url: u });
+                if(n) rtdb.ref('relics/' + selectedRelicId).update({ name: n, url: u });
+            }
+            if (type === 'move') {
+                const targetName = prompt("Enter the EXACT name of the destination folder:");
+                rtdb.ref('relics').once('value', snap => {
+                    const items = snap.val();
+                    const folderId = Object.keys(items).find(key => items[key].name === targetName && items[key].type === 'folder');
+                    if(folderId) { rtdb.ref('relics/' + selectedRelicId).update({ parent: folderId }); }
+                    else if(targetName.toLowerCase() === 'root') { rtdb.ref('relics/' + selectedRelicId).update({ parent: 'root' }); }
+                    else { alert("Folder not found."); }
+                });
             }
         };
 
-        // --- UPDATE THUMBNAIL ---
         document.getElementById('hidden-file-input').onchange = (e) => {
-            const file = e.target.files[0];
-            if(!file) return;
             const reader = new FileReader();
-            reader.onload = (ev) => {
-                rtdb.ref('relics/' + selectedRelicId).update({ imgUrl: ev.target.result });
-            };
-            reader.readAsDataURL(file);
+            reader.onload = (ev) => rtdb.ref('relics/' + selectedRelicId).update({ imgUrl: ev.target.result });
+            reader.readAsDataURL(e.target.files[0]);
         };
     </script>
 </body>
