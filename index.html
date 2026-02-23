@@ -5,17 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Gothic Archive</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Playfair+Display&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+
     <style>
         :root {
-            --bg-dark: #0a0a0a;
+            --bg-obsidian: #050505;
             --crimson: #8b0000;
             --gold-leaf: #af935a;
-            --text-off: #d1ccbc;
+            --text-off: #b5b0a1;
         }
 
         body {
-            background-color: var(--bg-dark);
-            background-image: url('https://www.transparenttextures.com/patterns/dark-brick-wall.png');
+            background-color: var(--bg-obsidian);
+            background-image: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)), 
+                              url('https://www.transparenttextures.com/patterns/black-linen.png');
             color: var(--text-off);
             font-family: 'Playfair Display', serif;
             margin: 0;
@@ -23,160 +29,170 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            min-height: 100vh;
         }
 
-        /* Top Admin Section */
-        #admin-desk {
-            width: 100%;
-            max-width: 900px;
-            background: rgba(20, 20, 20, 0.9);
-            border: 1px solid var(--gold-leaf);
-            padding: 20px;
-            margin-bottom: 40px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        /* Login Overlay */
+        #login-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-obsidian); z-index: 1000;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
             gap: 15px;
-            align-items: end;
         }
 
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
+        /* Admin Desk (Top) */
+        #admin-desk {
+            display: none; width: 100%; max-width: 1000px;
+            background: #0a0a0a; border-bottom: 1px solid var(--crimson);
+            padding: 15px; margin-bottom: 40px;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px; align-items: end;
         }
 
-        label {
-            font-family: 'Cinzel', serif;
-            font-size: 0.7rem;
-            color: var(--gold-leaf);
-            text-transform: uppercase;
+        .input-group { display: flex; flex-direction: column; gap: 5px; }
+        label { font-family: 'Cinzel', serif; font-size: 0.6rem; color: var(--gold-leaf); text-transform: uppercase; }
+        input { background: #000; border: 1px solid #222; color: white; padding: 8px; font-size: 0.8rem; }
+        input:focus { border-color: var(--crimson); outline: none; }
+        
+        button {
+            background: var(--crimson); color: white; border: none;
+            font-family: 'Cinzel', serif; padding: 10px; cursor: pointer; transition: 0.3s;
         }
-
-        input, select {
-            background: #111;
-            border: 1px solid #333;
-            color: white;
-            padding: 8px;
-            font-size: 0.9rem;
-        }
-
-        input:focus {
-            border-color: var(--crimson);
-            outline: none;
-        }
-
-        #save-relic {
-            background: var(--crimson);
-            color: white;
-            border: none;
-            font-family: 'Cinzel', serif;
-            padding: 10px;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        #save-relic:hover {
-            background: #600000;
-            box-shadow: 0 0 10px var(--crimson);
-        }
+        button:hover { background: #b00000; box-shadow: 0 0 10px var(--crimson); }
 
         /* Relic Grid */
         #archive-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 30px;
-            width: 100%;
-            max-width: 1100px;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 40px; width: 100%; max-width: 1200px;
         }
+
+        .relic-wrapper { position: relative; display: flex; flex-direction: column; align-items: center; }
 
         .relic {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            width: 100px; height: 130px; border: 1px solid var(--crimson);
+            background-color: #000; overflow: hidden; display: flex;
+            justify-content: center; align-items: center; transition: 0.3s;
             text-decoration: none;
-            color: inherit;
-            transition: transform 0.3s ease;
         }
 
-        .relic:hover {
-            transform: scale(1.05);
-        }
+        .relic:hover { box-shadow: 0 0 15px var(--crimson); border-width: 1.5px; }
+        .relic img { width: 100%; height: 100%; object-fit: cover; }
+        .relic-name { margin-top: 10px; font-family: 'Cinzel', serif; font-size: 0.75rem; text-align: center; }
 
-        /* The Frame */
-        .frame {
-            width: 110px;
-            height: 140px;
-            border: 2px solid var(--crimson); /* Thin crimson frame */
-            background-color: black;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.8);
+        .delete-btn {
+            position: absolute; top: -10px; right: -10px;
+            background: black; color: var(--crimson); border: 1px solid var(--crimson);
+            border-radius: 50%; width: 20px; height: 20px; font-size: 10px;
+            cursor: pointer; display: none; /* Shown only to admin */
         }
-
-        .frame img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            opacity: 0.8;
-        }
-
-        .relic-name {
-            margin-top: 12px;
-            font-family: 'Cinzel', serif;
-            font-size: 0.85rem;
-            letter-spacing: 1px;
-            text-align: center;
-        }
-
-        /* Folder Specific Styling */
-        .folder-relic .frame {
-            border-style: double;
-            border-width: 4px;
-            border-color: var(--gold-leaf);
-        }
-
     </style>
 </head>
 <body>
 
+    <div id="login-overlay">
+        <h2 style="font-family: 'Cinzel'; color: var(--gold-leaf);">Enter the Archive</h2>
+        <input type="email" id="login-email" placeholder="Email">
+        <input type="password" id="login-pass" placeholder="Password">
+        <button id="do-login">Unlock</button>
+    </div>
+
     <section id="admin-desk">
-        <div class="input-group">
-            <label>Display Name</label>
-            <input type="text" id="name" placeholder="E.g. The Library">
-        </div>
-        <div class="input-group">
-            <label>URL</label>
-            <input type="text" id="url" placeholder="https://...">
-        </div>
-        <div class="input-group">
-            <label>Thumbnail</label>
-            <input type="file" id="thumb" accept="image/*">
-        </div>
-        <div class="input-group">
-            <label>Destination</label>
-            <select id="destination">
-                <option value="page">Main Page</option>
-                <option value="folder">New Folder</option>
-            </select>
-        </div>
+        <div class="input-group"><label>Display Name</label><input type="text" id="site-name"></div>
+        <div class="input-group"><label>URL</label><input type="text" id="site-url"></div>
+        <div class="input-group"><label>Thumbnail</label><input type="file" id="site-thumb"></div>
         <button id="save-relic">Commemorate</button>
+        <button id="logout-btn" style="background: #222; color: #666;">Lock</button>
     </section>
 
-    <main id="archive-grid">
-        <a href="#" class="relic">
-            <div class="frame">
-                <img src="" alt="" style="display:none;">
-            </div>
-            <span class="relic-name">Sample Relic</span>
-        </a>
-    </main>
+    <main id="archive-grid"></main>
 
     <script>
-        // JS logic for Firebase uploads and folder creation will go here.
-        // I will keep your requested "Delete with confirmation" option
-        // preserved for when we hook up the database.
+        // --- PASTE YOUR FIREBASE CONFIG HERE ---
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT.appspot.com",
+            messagingSenderId: "YOUR_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+        const MY_UID = "zrRGmp8WHDhK1h9T486PTqegdt12";
+
+        // Auth Handling
+        document.getElementById('do-login').onclick = () => {
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-pass').value;
+            auth.signInWithEmailAndPassword(email, pass).catch(e => alert(e.message));
+        };
+
+        document.getElementById('logout-btn').onclick = () => auth.signOut().then(() => location.reload());
+
+        auth.onAuthStateChanged(user => {
+            if (user && user.uid === MY_UID) {
+                document.getElementById('login-overlay').style.display = 'none';
+                document.getElementById('admin-desk').style.display = 'grid';
+                loadRelics(true);
+            } else if (user) {
+                // If logged in but wrong UID
+                document.getElementById('login-overlay').style.display = 'none';
+                loadRelics(false);
+            }
+        });
+
+        // Save Relic
+        document.getElementById('save-relic').onclick = async () => {
+            const name = document.getElementById('site-name').value;
+            const url = document.getElementById('site-url').value;
+            const file = document.getElementById('site-thumb').files[0];
+            if(!name || !url) return alert("Details required");
+
+            let imageUrl = "";
+            if (file) {
+                const ref = storage.ref(`relics/${Date.now()}_${file.name}`);
+                await ref.put(file);
+                imageUrl = await ref.getDownloadURL();
+            }
+
+            await db.collection("relics").add({
+                name, url, imageUrl, timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            document.getElementById('site-name').value = '';
+            document.getElementById('site-url').value = '';
+        };
+
+        // Load & Delete Logic
+        function loadRelics(isAdmin) {
+            db.collection("relics").orderBy("timestamp", "desc").onSnapshot(snap => {
+                const grid = document.getElementById('archive-grid');
+                grid.innerHTML = '';
+                snap.forEach(doc => {
+                    const data = doc.data();
+                    const id = doc.id;
+                    const div = document.createElement('div');
+                    div.className = 'relic-wrapper';
+                    div.innerHTML = `
+                        <a href="${data.url}" class="relic" target="_blank">
+                            ${data.imageUrl ? `<img src="${data.imageUrl}">` : ''}
+                        </a>
+                        <span class="relic-name">${data.name}</span>
+                        ${isAdmin ? `<button class="delete-btn" onclick="deleteRelic('${id}')">X</button>` : ''}
+                    `;
+                    grid.appendChild(div);
+                });
+                if(isAdmin) document.querySelectorAll('.delete-btn').forEach(b => b.style.display = 'block');
+            });
+        }
+
+        window.deleteRelic = (id) => {
+            if (confirm("Are you certain you wish to purge this relic from the archive?")) {
+                db.collection("relics").doc(id).delete();
+            }
+        };
     </script>
 </body>
 </html>
