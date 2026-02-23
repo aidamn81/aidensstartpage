@@ -22,12 +22,11 @@
         #admin-desk { display: none; padding: 20px; gap: 10px; flex-wrap: wrap; justify-content: center; border-bottom: 1px solid var(--crimson); width: 100%; background: #080808; }
         #archive-grid { display: grid; padding: 40px; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 40px; width: 95%; }
         .relic-wrapper { display: flex; flex-direction: column; align-items: center; position: relative; cursor: pointer; }
-        .relic-frame { width: 110px; height: 145px; border: 1px solid var(--crimson); background: #000; overflow: hidden; transition: 0.3s; }
+        .relic-frame { width: 110px; height: 145px; border: 1px solid var(--crimson); background: #000; overflow: hidden; }
         .relic-frame img { width: 100%; height: 100%; object-fit: cover; }
         .relic-name { margin-top: 10px; font-family: 'Cinzel'; font-size: 0.75rem; text-align: center; }
-        #context-menu { display: none; position: fixed; z-index: 2000; background: #0a0a0a; border: 1px solid var(--gold); padding: 5px; box-shadow: 0 0 30px #000; }
+        #context-menu { display: none; position: fixed; z-index: 2000; background: #0a0a0a; border: 1px solid var(--gold); padding: 5px; }
         .menu-item { padding: 12px 25px; font-family: 'Cinzel'; font-size: 0.7rem; color: var(--gold); cursor: pointer; border-bottom: 1px solid #1a1a1a; }
-        .menu-item:hover { background: var(--crimson); color: white; }
         button { background: var(--crimson); color: white; border: none; padding: 10px 20px; cursor: pointer; font-family: 'Cinzel'; }
         input { background: #000; border: 1px solid #333; color: #fff; padding: 8px; }
     </style>
@@ -35,13 +34,13 @@
 <body>
 
     <div id="top-controls">
-        <span id="status-text" style="font-family: 'Cinzel'; color: var(--gold);">The Archive</span>
+        <span id="status-text" style="font-family: 'Cinzel'; color: var(--gold);">Archive Status: Disconnected</span>
         <button id="edit-toggle" style="background:transparent; border:1px solid var(--gold); color:var(--gold);">Edit Mode</button>
     </div>
 
     <section id="admin-desk">
-        <input type="text" id="r-name" placeholder="Name">
-        <input type="text" id="r-url" placeholder="URL">
+        <input type="text" id="r-name" placeholder="Relic Name">
+        <input type="text" id="r-url" placeholder="https://...">
         <input type="file" id="r-file" accept="image/*">
         <button id="r-save">Commemorate</button>
     </section>
@@ -49,8 +48,8 @@
     <main id="archive-grid"></main>
 
     <div id="context-menu">
-        <div class="menu-item" onclick="menuAction('edit')">Rename / Edit URL</div>
-        <div class="menu-item" onclick="document.getElementById('hidden-file-input').click()">Update Portrait</div>
+        <div class="menu-item" onclick="menuAction('edit')">Edit Details</div>
+        <div class="menu-item" onclick="document.getElementById('hidden-file-input').click()">New Portrait</div>
         <div class="menu-item" onclick="menuAction('delete')" style="color:var(--crimson);">Purge Relic</div>
     </div>
     <input type="file" id="hidden-file-input" style="display:none" accept="image/*">
@@ -66,21 +65,22 @@
             appId: "1:984377659362:web:8cfe5e14e129fcae3273bb"
         };
 
-        firebase.initializeApp(firebaseConfig);
+        const app = firebase.initializeApp(firebaseConfig);
         const rtdb = firebase.database();
         const auth = firebase.auth();
         const MY_UID = "zrRGmp8WHDhK1h9T486PTqegdt12";
         let isEditMode = false;
         let selectedRelicId = null;
-        let pressTimer;
 
-        // Login check
+        // Login check and UI Status
         auth.onAuthStateChanged(user => {
-            if (user && user.uid === MY_UID) { loadRelics(); } 
-            else { 
+            if (user && user.uid === MY_UID) { 
+                document.getElementById('status-text').innerText = "Archive Connected";
+                loadRelics(); 
+            } else { 
                 const email = prompt("Custodian Email:");
                 const pass = prompt("Key:");
-                auth.signInWithEmailAndPassword(email, pass).catch(e => alert(e.message));
+                auth.signInWithEmailAndPassword(email, pass).catch(e => alert("Auth Failed: " + e.message));
             }
         });
 
@@ -90,30 +90,44 @@
             document.getElementById('admin-desk').style.display = isEditMode ? 'flex' : 'none';
         };
 
-        // SAVE to Realtime Database
+        // SAVE LOGIC with Error Reporting
         document.getElementById('r-save').onclick = async () => {
             const name = document.getElementById('r-name').value;
             const url = document.getElementById('r-url').value;
             const file = document.getElementById('r-file').files[0];
-            if(!name || !url) return;
+            const btn = document.getElementById('r-save');
+            
+            if(!name || !url) return alert("Scrolls are empty.");
+            btn.innerText = "Saving...";
 
-            const saveRelic = (img) => {
-                const newRef = rtdb.ref('relics').push();
-                newRef.set({ name, url, imgUrl: img, timestamp: Date.now() });
-                document.getElementById('r-name').value = '';
-                document.getElementById('r-url').value = '';
+            const pushToDb = (imgStr) => {
+                rtdb.ref('relics').push({
+                    name: name,
+                    url: url,
+                    imgUrl: imgStr,
+                    timestamp: Date.now()
+                }, (error) => {
+                    if (error) {
+                        alert("Data could not be saved: " + error.message);
+                        btn.innerText = "Error";
+                    } else {
+                        btn.innerText = "Saved!";
+                        document.getElementById('r-name').value = '';
+                        document.getElementById('r-url').value = '';
+                        setTimeout(() => btn.innerText = "Commemorate", 2000);
+                    }
+                });
             };
 
             if(file) {
                 const reader = new FileReader();
-                reader.onload = (e) => saveRelic(e.target.result);
+                reader.onload = (e) => pushToDb(e.target.result);
                 reader.readAsDataURL(file);
             } else {
-                saveRelic("");
+                pushToDb("");
             }
         };
 
-        // LOAD from Realtime Database
         function loadRelics() {
             rtdb.ref('relics').on('value', snap => {
                 const grid = document.getElementById('archive-grid');
@@ -127,8 +141,8 @@
                     
                     wrap.onmousedown = (e) => startPress(e, id);
                     wrap.ontouchstart = (e) => startPress(e, id);
-                    wrap.onmouseup = () => { clearPress(); if(!window.longPressed) window.open(d.url, '_blank'); };
-                    wrap.ontouchend = clearPress;
+                    wrap.onmouseup = () => { if(!window.longPressed) window.open(d.url, '_blank'); clearTimeout(window.pTimer); };
+                    wrap.ontouchend = () => clearTimeout(window.pTimer);
                     grid.appendChild(wrap);
                 });
             });
@@ -138,18 +152,18 @@
             if(!isEditMode) return;
             window.longPressed = false;
             selectedRelicId = id;
-            pressTimer = window.setTimeout(() => { window.longPressed = true; showMenu(e); }, 700);
+            window.pTimer = setTimeout(() => { 
+                window.longPressed = true; 
+                const menu = document.getElementById('context-menu');
+                menu.style.display = 'block';
+                menu.style.left = (e.pageX || e.touches?.[0]?.pageX) + 'px';
+                menu.style.top = (e.pageY || e.touches?.[0]?.pageY) + 'px';
+            }, 700);
         }
-        function clearPress() { clearTimeout(pressTimer); }
-        function showMenu(e) {
-            const menu = document.getElementById('context-menu');
-            menu.style.display = 'block';
-            menu.style.left = (e.pageX || e.touches?.[0]?.pageX) + 'px';
-            menu.style.top = (e.pageY || e.touches?.[0]?.pageY) + 'px';
-        }
+
         window.onclick = () => document.getElementById('context-menu').style.display = 'none';
 
-        window.menuAction = async (type) => {
+        window.menuAction = (type) => {
             if (type === 'delete' && confirm("Purge this relic?")) rtdb.ref('relics/' + selectedRelicId).remove();
             if (type === 'edit') {
                 const n = prompt("New Name:"), u = prompt("New URL:");
