@@ -10,79 +10,60 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
     <style>
-        :root {
-            --obsidian: #050505;
-            --crimson: #7a0000;
-            --gold: #8c7340;
-            --text: #a19a89;
-        }
-
+        :root { --obsidian: #050505; --crimson: #7a0000; --gold: #8c7340; --text: #a19a89; }
+        
         body {
             background-color: var(--obsidian);
-            background-image: linear-gradient(rgba(0,0,0,0.95), rgba(0,0,0,0.95)), 
+            background-image: linear-gradient(rgba(0,0,0,0.96), rgba(0,0,0,0.96)), 
                               url('https://www.transparenttextures.com/patterns/dark-brick-wall.png');
-            color: var(--text);
-            font-family: 'Playfair Display', serif;
-            margin: 0; min-height: 100vh;
-            display: flex; flex-direction: column; align-items: center;
+            color: var(--text); font-family: 'Playfair Display', serif;
+            margin: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center;
         }
 
-        /* Admin Desk */
+        /* Top Bar Controls */
+        #top-controls {
+            width: 100%; padding: 10px 20px; display: flex; justify-content: space-between;
+            border-bottom: 1px solid #1a1a1a; background: #000; box-sizing: border-box;
+        }
+
         #admin-desk {
-            display: none; width: 100%; padding: 15px;
-            background: rgba(0,0,0,0.98); border-bottom: 1px solid var(--crimson);
-            box-sizing: border-box; justify-content: center; gap: 15px; flex-wrap: wrap;
+            display: none; padding: 20px; gap: 10px; flex-wrap: wrap; justify-content: center;
+            border-bottom: 1px solid var(--crimson); width: 100%;
         }
 
-        /* The Relic Grid */
+        /* Relic Styling */
         #archive-grid {
-            display: grid; padding: 40px;
-            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-            gap: 40px; width: 90%; max-width: 1200px;
+            display: grid; padding: 40px; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 40px; width: 90%;
         }
 
-        .relic-wrapper { 
-            position: relative; display: flex; flex-direction: column; align-items: center;
-            cursor: pointer; -webkit-touch-callout: none; user-select: none;
-        }
-
-        /* Gothic Thin Frame */
+        .relic-wrapper { display: flex; flex-direction: column; align-items: center; position: relative; }
+        
         .relic-frame {
-            width: 110px; height: 145px;
-            border: 1px solid var(--crimson);
-            background: #000; overflow: hidden;
-            display: flex; justify-content: center; align-items: center;
-            transition: 0.3s;
+            width: 110px; height: 145px; border: 1px solid var(--crimson);
+            background: #000; overflow: hidden; transition: 0.3s;
         }
-
         .relic-frame img { width: 100%; height: 100%; object-fit: cover; }
-        .relic-name { margin-top: 10px; font-family: 'Cinzel'; font-size: 0.75rem; text-align: center; }
+        .relic-name { margin-top: 10px; font-family: 'Cinzel'; font-size: 0.75rem; }
 
-        /* Long Press Menu */
+        /* Context Menu */
         #context-menu {
-            display: none; position: fixed; z-index: 2000;
-            background: #0a0a0a; border: 1px solid var(--gold);
-            padding: 10px; box-shadow: 0 0 20px #000;
+            display: none; position: fixed; z-index: 2000; background: #0a0a0a;
+            border: 1px solid var(--gold); padding: 5px; box-shadow: 0 0 20px #000;
         }
-
-        .menu-item {
-            padding: 8px 15px; font-family: 'Cinzel'; font-size: 0.7rem;
-            color: var(--gold); cursor: pointer; border-bottom: 1px solid #1a1a1a;
-        }
-
+        .menu-item { padding: 10px 20px; font-family: 'Cinzel'; font-size: 0.7rem; color: var(--gold); cursor: pointer; }
         .menu-item:hover { background: var(--crimson); color: white; }
 
-        input, select { background: #000; border: 1px solid #222; color: #fff; padding: 5px; }
-        button { background: var(--crimson); color: white; border: none; padding: 8px 12px; cursor: pointer; font-family: 'Cinzel'; }
+        input { background: #000; border: 1px solid #222; color: #fff; padding: 8px; }
+        button { background: var(--crimson); color: white; border: none; padding: 8px 15px; cursor: pointer; font-family: 'Cinzel'; }
+        .toggle-btn { background: transparent; border: 1px solid var(--gold); color: var(--gold); }
     </style>
 </head>
 <body>
 
-    <div id="login-overlay" style="display:flex; position:fixed; inset:0; background:var(--obsidian); z-index:3000; flex-direction:column; justify-content:center; align-items:center;">
-        <h2 style="font-family:'Cinzel'; color:var(--gold);">The Archive</h2>
-        <input type="email" id="l-email" placeholder="Email" style="margin:5px;">
-        <input type="password" id="l-pass" placeholder="Password" style="margin:5px;">
-        <button id="l-btn">Unlock</button>
+    <div id="top-controls">
+        <span id="status-text" style="font-family: 'Cinzel'; font-size: 0.8rem;">Archive Locked</span>
+        <button id="edit-toggle" class="toggle-btn">Edit Mode</button>
     </div>
 
     <section id="admin-desk">
@@ -95,13 +76,15 @@
     <main id="archive-grid"></main>
 
     <div id="context-menu">
-        <div class="menu-item" onclick="menuAction('edit')">Edit Name/URL</div>
-        <div class="menu-item" onclick="menuAction('thumb')">Change Thumbnail</div>
-        <div class="menu-item" onclick="menuAction('move')">Move Position</div>
+        <div class="menu-item" onclick="menuAction('edit')">Rename / Change URL</div>
+        <div class="menu-item" onclick="document.getElementById('hidden-file-input').click()">Update Thumbnail</div>
         <div class="menu-item" onclick="menuAction('delete')" style="color:var(--crimson);">Purge Relic</div>
     </div>
 
+    <input type="file" id="hidden-file-input" style="display:none" accept="image/*">
+
     <script>
+        // --- YOUR CONFIG REMAINS THE SAME ---
         const firebaseConfig = {
             apiKey: "AIzaSyAuNbY1Xv_ZF3kJah20qqPBz-IiiMAR9gE",
             authDomain: "aidenstartpage.firebaseapp.com",
@@ -112,27 +95,21 @@
         };
 
         firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
         const db = firebase.firestore();
         const MY_UID = "zrRGmp8WHDhK1h9T486PTqegdt12";
+        let isEditMode = false;
         let selectedRelicId = null;
         let pressTimer;
 
-        // Auth
-        document.getElementById('l-btn').onclick = () => {
-            auth.signInWithEmailAndPassword(document.getElementById('l-email').value, document.getElementById('l-pass').value)
-                .catch(err => alert(err.message));
+        // Toggle Edit Mode (Notes App Style)
+        document.getElementById('edit-toggle').onclick = (e) => {
+            isEditMode = !isEditMode;
+            e.target.innerText = isEditMode ? "Lock Archive" : "Edit Mode";
+            document.getElementById('status-text').innerText = isEditMode ? "Archive Unlocked" : "Archive Locked";
+            document.getElementById('admin-desk').style.display = isEditMode ? 'flex' : 'none';
         };
 
-        auth.onAuthStateChanged(user => {
-            if (user && user.uid === MY_UID) {
-                document.getElementById('login-overlay').style.display = 'none';
-                document.getElementById('admin-desk').style.display = 'flex';
-                loadRelics();
-            }
-        });
-
-        // Save
+        // Save Relic (Persistence fix)
         document.getElementById('r-save').onclick = async () => {
             const name = document.getElementById('r-name').value;
             const url = document.getElementById('r-url').value;
@@ -142,47 +119,43 @@
             let imgData = "";
             if(file) {
                 const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = async () => {
-                    imgData = reader.result;
-                    await db.collection("relics").add({ name, url, imgUrl: imgData, timestamp: Date.now() });
-                    location.reload();
+                reader.onload = async (e) => {
+                    await db.collection("relics").add({ name, url, imgUrl: e.target.result, timestamp: Date.now() });
+                    document.getElementById('r-name').value = ''; document.getElementById('r-url').value = '';
                 };
+                reader.readAsDataURL(file);
             } else {
                 await db.collection("relics").add({ name, url, imgUrl: "", timestamp: Date.now() });
-                location.reload();
             }
         };
 
-        // Persistent Load
-        function loadRelics() {
-            db.collection("relics").orderBy("timestamp", "asc").onSnapshot(snap => {
-                const grid = document.getElementById('archive-grid');
-                grid.innerHTML = '';
-                snap.forEach(doc => {
-                    const d = doc.data();
-                    const id = doc.id;
-                    const wrap = document.createElement('div');
-                    wrap.className = 'relic-wrapper';
-                    wrap.innerHTML = `
-                        <div class="relic-frame" onclick="if(!window.longPressed) window.open('${d.url}', '_blank')">
-                            ${d.imgUrl ? `<img src="${d.imgUrl}">` : ''}
-                        </div>
-                        <span class="relic-name">${d.name}</span>
-                    `;
-                    
-                    // Long Press Logic
-                    wrap.onmousedown = (e) => startPress(e, id);
-                    wrap.ontouchstart = (e) => startPress(e, id);
-                    wrap.onmouseup = clearPress;
-                    wrap.ontouchend = clearPress;
+        // Load Relics
+        db.collection("relics").orderBy("timestamp", "asc").onSnapshot(snap => {
+            const grid = document.getElementById('archive-grid');
+            grid.innerHTML = '';
+            snap.forEach(doc => {
+                const d = doc.data();
+                const id = doc.id;
+                const wrap = document.createElement('div');
+                wrap.className = 'relic-wrapper';
+                wrap.innerHTML = `
+                    <div class="relic-frame">
+                        ${d.imgUrl ? `<img src="${d.imgUrl}">` : ''}
+                    </div>
+                    <span class="relic-name">${d.name}</span>
+                `;
 
-                    grid.appendChild(wrap);
-                });
+                wrap.onmousedown = (e) => startPress(e, id);
+                wrap.ontouchstart = (e) => startPress(e, id);
+                wrap.onmouseup = () => { clearPress(); if(!window.longPressed) window.open(d.url, '_blank'); };
+                wrap.ontouchend = clearPress;
+
+                grid.appendChild(wrap);
             });
-        }
+        });
 
         function startPress(e, id) {
+            if(!isEditMode) return;
             window.longPressed = false;
             selectedRelicId = id;
             pressTimer = window.setTimeout(() => {
@@ -202,20 +175,26 @@
 
         window.onclick = () => document.getElementById('context-menu').style.display = 'none';
 
+        // Update Thumbnail Logic
+        document.getElementById('hidden-file-input').onchange = async (e) => {
+            const file = e.target.files[0];
+            if(!file || !selectedRelicId) return;
+            const reader = new FileReader();
+            reader.onload = async (ev) => {
+                await db.collection("relics").doc(selectedRelicId).update({ imgUrl: ev.target.result });
+            };
+            reader.readAsDataURL(file);
+        };
+
         // Menu Actions
         window.menuAction = async (type) => {
             if (type === 'delete') {
-                if (confirm("Purge this relic forever?")) {
-                    await db.collection("relics").doc(selectedRelicId).delete();
-                }
+                if (confirm("Purge this relic?")) await db.collection("relics").doc(selectedRelicId).delete();
             } else if (type === 'edit') {
-                const newName = prompt("New Name:");
-                const newUrl = prompt("New URL:");
-                if(newName && newUrl) {
-                    await db.collection("relics").doc(selectedRelicId).update({ name: newName, url: newUrl });
-                }
+                const n = prompt("New Name:");
+                const u = prompt("New URL:");
+                if(n && u) await db.collection("relics").doc(selectedRelicId).update({ name: n, url: u });
             }
-            // Move and change thumb logic would follow similar update patterns
         };
     </script>
 </body>
