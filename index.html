@@ -3,177 +3,180 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Gothic Study</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=UnifrakturMaguntia&family=Playfair+Display:ital,wght@0,400;1,700&display=swap" rel="stylesheet">
+    <title>The Gothic Archive</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Playfair+Display&display=swap" rel="stylesheet">
     <style>
         :root {
-            --deep-obsidian: #0d0d0d;
-            --blood-velvet: #5e0b0b;
-            --aged-gold: #b08d57;
-            --parchment: #e2dac2;
-            --shadow: rgba(0, 0, 0, 0.8);
+            --bg-dark: #0a0a0a;
+            --crimson: #8b0000;
+            --gold-leaf: #af935a;
+            --text-off: #d1ccbc;
         }
 
         body {
-            background-color: var(--deep-obsidian);
-            /* Using a damask-style pattern texture */
-            background-image: url('https://www.transparenttextures.com/patterns/dark-matter.png'); 
-            color: var(--parchment);
+            background-color: var(--bg-dark);
+            background-image: url('https://www.transparenttextures.com/patterns/dark-brick-wall.png');
+            color: var(--text-off);
             font-family: 'Playfair Display', serif;
             margin: 0;
+            padding: 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            min-height: 100vh;
         }
 
-        /* Ornate Header */
-        header {
-            margin-top: 40px;
-            text-align: center;
-            padding: 30px;
-            border: 3px double var(--aged-gold);
-            background: rgba(0, 0, 0, 0.6);
-            box-shadow: 0 0 20px var(--blood-velvet);
-            width: 70%;
-            max-width: 800px;
-        }
-
-        h1 {
-            font-family: 'UnifrakturMaguntia', cursive; /* Gothic Blackletter font */
-            font-size: 4rem;
-            color: var(--aged-gold);
-            margin: 0;
-            text-shadow: 3px 3px 5px #000;
-        }
-
-        p.subtitle {
-            font-family: 'Cinzel', serif;
-            letter-spacing: 4px;
-            font-size: 0.8rem;
-            color: var(--blood-velvet);
-            text-transform: uppercase;
-            font-weight: bold;
-        }
-
-        /* Bookmark Library */
-        #library {
+        /* Top Admin Section */
+        #admin-desk {
+            width: 100%;
+            max-width: 900px;
+            background: rgba(20, 20, 20, 0.9);
+            border: 1px solid var(--gold-leaf);
+            padding: 20px;
+            margin-bottom: 40px;
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 40px;
-            width: 85%;
-            margin: 60px 0;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            align-items: end;
         }
 
-        .relic-card {
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        label {
+            font-family: 'Cinzel', serif;
+            font-size: 0.7rem;
+            color: var(--gold-leaf);
+            text-transform: uppercase;
+        }
+
+        input, select {
+            background: #111;
+            border: 1px solid #333;
+            color: white;
+            padding: 8px;
+            font-size: 0.9rem;
+        }
+
+        input:focus {
+            border-color: var(--crimson);
+            outline: none;
+        }
+
+        #save-relic {
+            background: var(--crimson);
+            color: white;
+            border: none;
+            font-family: 'Cinzel', serif;
+            padding: 10px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        #save-relic:hover {
+            background: #600000;
+            box-shadow: 0 0 10px var(--crimson);
+        }
+
+        /* Relic Grid */
+        #archive-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 30px;
+            width: 100%;
+            max-width: 1100px;
+        }
+
+        .relic {
             display: flex;
             flex-direction: column;
             align-items: center;
             text-decoration: none;
-            color: var(--parchment);
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            color: inherit;
+            transition: transform 0.3s ease;
         }
 
-        .relic-card:hover {
-            transform: scale(1.1);
+        .relic:hover {
+            transform: scale(1.05);
         }
 
+        /* The Frame */
         .frame {
-            width: 120px;
-            height: 150px;
-            border: 8px solid #222;
-            border-image: linear-gradient(to bottom right, #b08d57, #4a371c, #b08d57) 1;
-            background-color: #1a1a1a;
-            box-shadow: 5px 10px 20px var(--shadow);
-            overflow: hidden;
+            width: 110px;
+            height: 140px;
+            border: 2px solid var(--crimson); /* Thin crimson frame */
+            background-color: black;
             display: flex;
             justify-content: center;
             align-items: center;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.8);
         }
 
         .frame img {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            filter: sepia(0.5) contrast(1.2);
+            opacity: 0.8;
         }
 
-        .label {
-            margin-top: 15px;
+        .relic-name {
+            margin-top: 12px;
             font-family: 'Cinzel', serif;
-            font-size: 0.9rem;
-            border-bottom: 1px solid transparent;
-            transition: border 0.3s;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            text-align: center;
         }
 
-        .relic-card:hover .label {
-            border-bottom: 1px solid var(--aged-gold);
-        }
-
-        /* Firebase Dashboard (The "Desk") */
-        #the-desk {
-            background: rgba(15, 15, 15, 0.95);
-            border-top: 2px solid var(--aged-gold);
-            padding: 25px;
-            width: 100%;
-            position: sticky;
-            bottom: 0;
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            align-items: center;
-        }
-
-        input, button {
-            background: #1a1a1a;
-            border: 1px solid var(--aged-gold);
-            color: var(--parchment);
-            padding: 10px;
-            font-family: 'Cinzel', serif;
-        }
-
-        button {
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        button:hover {
-            background: var(--blood-velvet);
-        }
-
-        /* File input styling */
-        input[type="file"] {
-            border: none;
-            font-size: 0.8rem;
+        /* Folder Specific Styling */
+        .folder-relic .frame {
+            border-style: double;
+            border-width: 4px;
+            border-color: var(--gold-leaf);
         }
 
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>The Archive</h1>
-        <p class="subtitle">Personal Curator of the Digital Realm</p>
-        <div id="user-info">
-            <button id="login-btn">Unlock Study</button>
+    <section id="admin-desk">
+        <div class="input-group">
+            <label>Display Name</label>
+            <input type="text" id="name" placeholder="E.g. The Library">
         </div>
-    </header>
+        <div class="input-group">
+            <label>URL</label>
+            <input type="text" id="url" placeholder="https://...">
+        </div>
+        <div class="input-group">
+            <label>Thumbnail</label>
+            <input type="file" id="thumb" accept="image/*">
+        </div>
+        <div class="input-group">
+            <label>Destination</label>
+            <select id="destination">
+                <option value="page">Main Page</option>
+                <option value="folder">New Folder</option>
+            </select>
+        </div>
+        <button id="save-relic">Commemorate</button>
+    </section>
 
-    <main id="library">
-        <a href="#" class="relic-card">
+    <main id="archive-grid">
+        <a href="#" class="relic">
             <div class="frame">
-                <img src="https://via.placeholder.com/120x150/5e0b0b/e2dac2?text=Sample" alt="Example">
+                <img src="" alt="" style="display:none;">
             </div>
-            <span class="label">Sample Site</span>
+            <span class="relic-name">Sample Relic</span>
         </a>
     </main>
 
-    <footer id="the-desk">
-        <input type="text" id="site-name" placeholder="Title of Relic">
-        <input type="text" id="site-url" placeholder="URL (https://...)">
-        <input type="file" id="site-thumb">
-        <button id="save-btn">Add to Archive</button>
-    </footer>
-
+    <script>
+        // JS logic for Firebase uploads and folder creation will go here.
+        // I will keep your requested "Delete with confirmation" option
+        // preserved for when we hook up the database.
+    </script>
 </body>
 </html>
