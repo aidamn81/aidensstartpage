@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Gothic Archive</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Playfair+Display&display=swap" rel="stylesheet">
-    
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -24,99 +23,88 @@
                               url('https://www.transparenttextures.com/patterns/dark-brick-wall.png');
             color: var(--text);
             font-family: 'Playfair Display', serif;
-            margin: 0; padding: 0;
+            margin: 0; min-height: 100vh;
             display: flex; flex-direction: column; align-items: center;
-            min-height: 100vh;
         }
 
-        /* Entry Screen */
-        #login-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--obsidian); z-index: 1000;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-        }
-
-        .login-box { padding: 40px; border: 1px solid var(--gold); background: #080808; text-align: center; }
-
-        /* Admin Desk (Top Bar) */
+        /* Admin Desk */
         #admin-desk {
             display: none; width: 100%; padding: 15px;
             background: rgba(0,0,0,0.98); border-bottom: 1px solid var(--crimson);
             box-sizing: border-box; justify-content: center; gap: 15px; flex-wrap: wrap;
         }
 
-        .input-group { display: flex; flex-direction: column; gap: 4px; }
-        label { font-family: 'Cinzel'; font-size: 0.6rem; color: var(--gold); text-transform: uppercase; }
-        
-        input, select { 
-            background: #000; border: 1px solid #222; color: #fff; 
-            padding: 6px; font-size: 0.8rem; font-family: inherit;
-        }
-
-        button {
-            background: var(--crimson); color: #fff; border: none;
-            font-family: 'Cinzel'; padding: 8px 15px; cursor: pointer; transition: 0.3s;
-        }
-        button:hover { background: #550000; box-shadow: 0 0 12px var(--crimson); }
-
-        /* Relics Grid */
+        /* The Relic Grid */
         #archive-grid {
             display: grid; padding: 40px;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 50px; width: 90%; max-width: 1200px;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 40px; width: 90%; max-width: 1200px;
         }
 
-        .relic-wrapper { position: relative; display: flex; flex-direction: column; align-items: center; }
-        
+        .relic-wrapper { 
+            position: relative; display: flex; flex-direction: column; align-items: center;
+            cursor: pointer; -webkit-touch-callout: none; user-select: none;
+        }
+
+        /* Gothic Thin Frame */
         .relic-frame {
-            width: 105px; height: 135px;
-            border: 1px solid var(--crimson); /* Thin frame from your images */
+            width: 110px; height: 145px;
+            border: 1px solid var(--crimson);
             background: #000; overflow: hidden;
             display: flex; justify-content: center; align-items: center;
-            transition: 0.5s cubic-bezier(0.2, 1, 0.3, 1);
+            transition: 0.3s;
         }
 
-        .relic-frame:hover { transform: scale(1.08); box-shadow: 0 0 20px var(--crimson); }
         .relic-frame img { width: 100%; height: 100%; object-fit: cover; }
-        
-        .relic-name { 
-            margin-top: 15px; font-family: 'Cinzel'; font-size: 0.75rem; 
-            color: var(--text); letter-spacing: 1px; text-decoration: none;
+        .relic-name { margin-top: 10px; font-family: 'Cinzel'; font-size: 0.75rem; text-align: center; }
+
+        /* Long Press Menu */
+        #context-menu {
+            display: none; position: fixed; z-index: 2000;
+            background: #0a0a0a; border: 1px solid var(--gold);
+            padding: 10px; box-shadow: 0 0 20px #000;
         }
 
-        .delete-btn {
-            position: absolute; top: -8px; right: -8px;
-            background: #000; color: var(--crimson); border: 1px solid var(--crimson);
-            border-radius: 50%; cursor: pointer; font-size: 10px; width: 20px; height: 20px;
+        .menu-item {
+            padding: 8px 15px; font-family: 'Cinzel'; font-size: 0.7rem;
+            color: var(--gold); cursor: pointer; border-bottom: 1px solid #1a1a1a;
         }
+
+        .menu-item:hover { background: var(--crimson); color: white; }
+
+        input, select { background: #000; border: 1px solid #222; color: #fff; padding: 5px; }
+        button { background: var(--crimson); color: white; border: none; padding: 8px 12px; cursor: pointer; font-family: 'Cinzel'; }
     </style>
 </head>
 <body>
 
-    <div id="login-overlay">
-        <div class="login-box">
-            <h2 style="font-family: 'Cinzel'; color: var(--gold); margin-bottom: 20px;">The Archive</h2>
-            <input type="email" id="l-email" placeholder="Email" style="display:block; margin: 10px auto;">
-            <input type="password" id="l-pass" placeholder="Password" style="display:block; margin: 10px auto;">
-            <button id="l-btn">Unlock</button>
-        </div>
+    <div id="login-overlay" style="display:flex; position:fixed; inset:0; background:var(--obsidian); z-index:3000; flex-direction:column; justify-content:center; align-items:center;">
+        <h2 style="font-family:'Cinzel'; color:var(--gold);">The Archive</h2>
+        <input type="email" id="l-email" placeholder="Email" style="margin:5px;">
+        <input type="password" id="l-pass" placeholder="Password" style="margin:5px;">
+        <button id="l-btn">Unlock</button>
     </div>
 
     <section id="admin-desk">
-        <div class="input-group"><label>Name</label><input type="text" id="r-name"></div>
-        <div class="input-group"><label>URL</label><input type="text" id="r-url"></div>
-        <div class="input-group"><label>Image (Local)</label><input type="file" id="r-file" accept="image/*"></div>
+        <input type="text" id="r-name" placeholder="Name">
+        <input type="text" id="r-url" placeholder="URL">
+        <input type="file" id="r-file" accept="image/*">
         <button id="r-save">Commemorate</button>
-        <button id="logout" style="background: #111; color: #444;">Lock</button>
     </section>
 
     <main id="archive-grid"></main>
+
+    <div id="context-menu">
+        <div class="menu-item" onclick="menuAction('edit')">Edit Name/URL</div>
+        <div class="menu-item" onclick="menuAction('thumb')">Change Thumbnail</div>
+        <div class="menu-item" onclick="menuAction('move')">Move Position</div>
+        <div class="menu-item" onclick="menuAction('delete')" style="color:var(--crimson);">Purge Relic</div>
+    </div>
 
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyAuNbY1Xv_ZF3kJah20qqPBz-IiiMAR9gE",
             authDomain: "aidenstartpage.firebaseapp.com",
-            databaseURL: "https://aidenstartpage-default-rtdb.europe-west1.firebasedatabase.app",
             projectId: "aidenstartpage",
             storageBucket: "aidenstartpage.firebasestorage.app",
             messagingSenderId: "984377659362",
@@ -127,75 +115,108 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
         const MY_UID = "zrRGmp8WHDhK1h9T486PTqegdt12";
+        let selectedRelicId = null;
+        let pressTimer;
 
-        // Login Logic
+        // Auth
         document.getElementById('l-btn').onclick = () => {
             auth.signInWithEmailAndPassword(document.getElementById('l-email').value, document.getElementById('l-pass').value)
                 .catch(err => alert(err.message));
         };
 
-        document.getElementById('logout').onclick = () => auth.signOut().then(() => location.reload());
-
         auth.onAuthStateChanged(user => {
             if (user && user.uid === MY_UID) {
                 document.getElementById('login-overlay').style.display = 'none';
                 document.getElementById('admin-desk').style.display = 'flex';
-                render(true);
+                loadRelics();
             }
         });
 
-        // Save Relic (Spark Plan Workaround: Base64 Encoding)
+        // Save
         document.getElementById('r-save').onclick = async () => {
             const name = document.getElementById('r-name').value;
             const url = document.getElementById('r-url').value;
             const file = document.getElementById('r-file').files[0];
-            
-            if(!name || !url) return alert("Fill all scrolls.");
+            if(!name || !url) return;
 
+            let imgData = "";
             if(file) {
                 const reader = new FileReader();
                 reader.readAsDataURL(file);
                 reader.onload = async () => {
-                    await saveToFirestore(name, url, reader.result);
+                    imgData = reader.result;
+                    await db.collection("relics").add({ name, url, imgUrl: imgData, timestamp: Date.now() });
+                    location.reload();
                 };
             } else {
-                await saveToFirestore(name, url, "");
+                await db.collection("relics").add({ name, url, imgUrl: "", timestamp: Date.now() });
+                location.reload();
             }
         };
 
-        async function saveToFirestore(name, url, imgData) {
-            await db.collection("relics").add({
-                name, url, imgUrl: imgData, 
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            location.reload();
-        }
-
-        // Render & Delete with Confirmation
-        function render(isAdmin) {
-            db.collection("relics").orderBy("timestamp", "desc").onSnapshot(snap => {
+        // Persistent Load
+        function loadRelics() {
+            db.collection("relics").orderBy("timestamp", "asc").onSnapshot(snap => {
                 const grid = document.getElementById('archive-grid');
                 grid.innerHTML = '';
                 snap.forEach(doc => {
                     const d = doc.data();
                     const id = doc.id;
-                    grid.innerHTML += `
-                        <div class="relic-wrapper">
-                            <a href="${d.url}" class="relic-frame" target="_blank">
-                                ${d.imgUrl ? `<img src="${d.imgUrl}">` : ''}
-                            </a>
-                            <a href="${d.url}" class="relic-name" target="_blank">${d.name}</a>
-                            ${isAdmin ? `<button class="delete-btn" onclick="del('${id}')">X</button>` : ''}
-                        </div>`;
+                    const wrap = document.createElement('div');
+                    wrap.className = 'relic-wrapper';
+                    wrap.innerHTML = `
+                        <div class="relic-frame" onclick="if(!window.longPressed) window.open('${d.url}', '_blank')">
+                            ${d.imgUrl ? `<img src="${d.imgUrl}">` : ''}
+                        </div>
+                        <span class="relic-name">${d.name}</span>
+                    `;
+                    
+                    // Long Press Logic
+                    wrap.onmousedown = (e) => startPress(e, id);
+                    wrap.ontouchstart = (e) => startPress(e, id);
+                    wrap.onmouseup = clearPress;
+                    wrap.ontouchend = clearPress;
+
+                    grid.appendChild(wrap);
                 });
             });
         }
 
-        window.del = (id) => {
-            if(confirm("Are you certain you wish to purge this relic?")) {
-                db.collection("relics").doc(id).delete();
-            }
+        function startPress(e, id) {
+            window.longPressed = false;
+            selectedRelicId = id;
+            pressTimer = window.setTimeout(() => {
+                window.longPressed = true;
+                showMenu(e);
+            }, 700);
         }
+
+        function clearPress() { clearTimeout(pressTimer); }
+
+        function showMenu(e) {
+            const menu = document.getElementById('context-menu');
+            menu.style.display = 'block';
+            menu.style.left = (e.pageX || e.touches[0].pageX) + 'px';
+            menu.style.top = (e.pageY || e.touches[0].pageY) + 'px';
+        }
+
+        window.onclick = () => document.getElementById('context-menu').style.display = 'none';
+
+        // Menu Actions
+        window.menuAction = async (type) => {
+            if (type === 'delete') {
+                if (confirm("Purge this relic forever?")) {
+                    await db.collection("relics").doc(selectedRelicId).delete();
+                }
+            } else if (type === 'edit') {
+                const newName = prompt("New Name:");
+                const newUrl = prompt("New URL:");
+                if(newName && newUrl) {
+                    await db.collection("relics").doc(selectedRelicId).update({ name: newName, url: newUrl });
+                }
+            }
+            // Move and change thumb logic would follow similar update patterns
+        };
     </script>
 </body>
 </html>
