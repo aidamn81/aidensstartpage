@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Gothic Archive</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Playfair+Display&display=swap" rel="stylesheet">
+    
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -20,19 +21,17 @@
 
         body {
             background-color: var(--bg-obsidian);
-            background-image: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)), 
+            /* Subtle dark gothic texture */
+            background-image: linear-gradient(rgba(0,0,0,0.9), rgba(0,0,0,0.9)), 
                               url('https://www.transparenttextures.com/patterns/black-linen.png');
             color: var(--text-off);
             font-family: 'Playfair Display', serif;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            margin: 0; padding: 20px;
+            display: flex; flex-direction: column; align-items: center;
             min-height: 100vh;
         }
 
-        /* Login Overlay */
+        /* Entry Overlay */
         #login-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: var(--bg-obsidian); z-index: 1000;
@@ -40,81 +39,87 @@
             gap: 15px;
         }
 
-        /* Admin Desk (Top) */
+        /* Header Admin Desk */
         #admin-desk {
             display: none; width: 100%; max-width: 1000px;
-            background: #0a0a0a; border-bottom: 1px solid var(--crimson);
-            padding: 15px; margin-bottom: 40px;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            background: rgba(10, 10, 10, 0.95);
+            border: 1px solid var(--crimson);
+            padding: 20px; margin-bottom: 50px;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
             gap: 15px; align-items: end;
         }
 
         .input-group { display: flex; flex-direction: column; gap: 5px; }
-        label { font-family: 'Cinzel', serif; font-size: 0.6rem; color: var(--gold-leaf); text-transform: uppercase; }
-        input { background: #000; border: 1px solid #222; color: white; padding: 8px; font-size: 0.8rem; }
-        input:focus { border-color: var(--crimson); outline: none; }
+        label { font-family: 'Cinzel', serif; font-size: 0.6rem; color: var(--gold-leaf); }
+        input, select { background: #000; border: 1px solid #222; color: white; padding: 8px; font-size: 0.8rem; }
         
         button {
             background: var(--crimson); color: white; border: none;
-            font-family: 'Cinzel', serif; padding: 10px; cursor: pointer; transition: 0.3s;
+            font-family: 'Cinzel', serif; padding: 10px; cursor: pointer;
         }
-        button:hover { background: #b00000; box-shadow: 0 0 10px var(--crimson); }
 
-        /* Relic Grid */
+        /* Archive Grid */
         #archive-grid {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-            gap: 40px; width: 100%; max-width: 1200px;
+            gap: 45px; width: 100%; max-width: 1200px;
         }
 
         .relic-wrapper { position: relative; display: flex; flex-direction: column; align-items: center; }
-
+        
         .relic {
-            width: 100px; height: 130px; border: 1px solid var(--crimson);
-            background-color: #000; overflow: hidden; display: flex;
-            justify-content: center; align-items: center; transition: 0.3s;
-            text-decoration: none;
+            width: 110px; height: 145px;
+            border: 1.5px solid var(--crimson); /* Thinner crimson frame */
+            background-color: #000; overflow: hidden;
+            display: flex; justify-content: center; align-items: center;
+            transition: 0.4s; text-decoration: none;
         }
 
-        .relic:hover { box-shadow: 0 0 15px var(--crimson); border-width: 1.5px; }
+        .relic:hover { box-shadow: 0 0 20px var(--crimson); transform: translateY(-5px); }
         .relic img { width: 100%; height: 100%; object-fit: cover; }
-        .relic-name { margin-top: 10px; font-family: 'Cinzel', serif; font-size: 0.75rem; text-align: center; }
+        .relic-name { margin-top: 12px; font-family: 'Cinzel', serif; font-size: 0.8rem; text-align: center; color: var(--text-off); }
 
         .delete-btn {
             position: absolute; top: -10px; right: -10px;
-            background: black; color: var(--crimson); border: 1px solid var(--crimson);
-            border-radius: 50%; width: 20px; height: 20px; font-size: 10px;
-            cursor: pointer; display: none; /* Shown only to admin */
+            background: #000; color: var(--crimson); border: 1px solid var(--crimson);
+            border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-size: 12px;
         }
     </style>
 </head>
 <body>
 
     <div id="login-overlay">
-        <h2 style="font-family: 'Cinzel'; color: var(--gold-leaf);">Enter the Archive</h2>
+        <h1 style="font-family: 'Cinzel'; color: var(--gold-leaf);">The Archive</h1>
         <input type="email" id="login-email" placeholder="Email">
         <input type="password" id="login-pass" placeholder="Password">
-        <button id="do-login">Unlock</button>
+        <button id="do-login">Unlock Archive</button>
     </div>
 
     <section id="admin-desk">
         <div class="input-group"><label>Display Name</label><input type="text" id="site-name"></div>
         <div class="input-group"><label>URL</label><input type="text" id="site-url"></div>
         <div class="input-group"><label>Thumbnail</label><input type="file" id="site-thumb"></div>
+        <div class="input-group">
+            <label>Category</label>
+            <select id="site-folder">
+                <option value="General">General</option>
+                <option value="Work">Work</option>
+                <option value="Entertainment">Entertainment</option>
+            </select>
+        </div>
         <button id="save-relic">Commemorate</button>
-        <button id="logout-btn" style="background: #222; color: #666;">Lock</button>
+        <button id="logout-btn" style="background: #222;">Lock</button>
     </section>
 
     <main id="archive-grid"></main>
 
     <script>
-        // --- PASTE YOUR FIREBASE CONFIG HERE ---
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_PROJECT.firebaseapp.com",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_PROJECT.appspot.com",
-            messagingSenderId: "YOUR_ID",
-            appId: "YOUR_APP_ID"
+            apiKey: "AIzaSyAuNbY1Xv_ZF3kJah20qqPBz-IiiMAR9gE",
+            authDomain: "aidenstartpage.firebaseapp.com",
+            projectId: "aidenstartpage",
+            storageBucket: "aidenstartpage.firebasestorage.app",
+            messagingSenderId: "984377659362",
+            appId: "1:984377659362:web:8cfe5e14e129fcae3273bb"
         };
 
         firebase.initializeApp(firebaseConfig);
@@ -123,7 +128,7 @@
         const storage = firebase.storage();
         const MY_UID = "zrRGmp8WHDhK1h9T486PTqegdt12";
 
-        // Auth Handling
+        // Login
         document.getElementById('do-login').onclick = () => {
             const email = document.getElementById('login-email').value;
             const pass = document.getElementById('login-pass').value;
@@ -137,19 +142,17 @@
                 document.getElementById('login-overlay').style.display = 'none';
                 document.getElementById('admin-desk').style.display = 'grid';
                 loadRelics(true);
-            } else if (user) {
-                // If logged in but wrong UID
-                document.getElementById('login-overlay').style.display = 'none';
-                loadRelics(false);
             }
         });
 
-        // Save Relic
+        // Save
         document.getElementById('save-relic').onclick = async () => {
             const name = document.getElementById('site-name').value;
             const url = document.getElementById('site-url').value;
+            const folder = document.getElementById('site-folder').value;
             const file = document.getElementById('site-thumb').files[0];
-            if(!name || !url) return alert("Details required");
+            
+            if(!name || !url) return alert("Fill all scrolls.");
 
             let imageUrl = "";
             if (file) {
@@ -159,13 +162,15 @@
             }
 
             await db.collection("relics").add({
-                name, url, imageUrl, timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                name, url, folder, imageUrl, 
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
             });
+            
             document.getElementById('site-name').value = '';
             document.getElementById('site-url').value = '';
         };
 
-        // Load & Delete Logic
+        // Load & Delete
         function loadRelics(isAdmin) {
             db.collection("relics").orderBy("timestamp", "desc").onSnapshot(snap => {
                 const grid = document.getElementById('archive-grid');
@@ -173,23 +178,22 @@
                 snap.forEach(doc => {
                     const data = doc.data();
                     const id = doc.id;
-                    const div = document.createElement('div');
-                    div.className = 'relic-wrapper';
-                    div.innerHTML = `
+                    const el = document.createElement('div');
+                    el.className = 'relic-wrapper';
+                    el.innerHTML = `
                         <a href="${data.url}" class="relic" target="_blank">
                             ${data.imageUrl ? `<img src="${data.imageUrl}">` : ''}
                         </a>
                         <span class="relic-name">${data.name}</span>
                         ${isAdmin ? `<button class="delete-btn" onclick="deleteRelic('${id}')">X</button>` : ''}
                     `;
-                    grid.appendChild(div);
+                    grid.appendChild(el);
                 });
-                if(isAdmin) document.querySelectorAll('.delete-btn').forEach(b => b.style.display = 'block');
             });
         }
 
         window.deleteRelic = (id) => {
-            if (confirm("Are you certain you wish to purge this relic from the archive?")) {
+            if (confirm("Are you certain you wish to purge this relic?")) {
                 db.collection("relics").doc(id).delete();
             }
         };
