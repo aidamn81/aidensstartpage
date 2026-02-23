@@ -21,24 +21,31 @@
 
         #top-controls { width: 100%; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1a1a1a; background: #000; box-sizing: border-box; }
         
-        /* Compact Admin Desk: Now half as narrow and centered */
         #admin-desk { 
             display: none; padding: 15px; gap: 8px; flex-direction: column; 
             align-items: center; border: 1px solid var(--crimson); 
-            width: 300px; /* Half-narrow constraint */
-            margin: 20px auto; background: #080808; border-radius: 4px;
+            width: 300px; margin: 20px auto; background: #080808; border-radius: 4px;
         }
 
         #archive-grid { display: grid; padding: 40px; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 30px; width: 95%; }
 
         .relic-wrapper { display: flex; flex-direction: column; align-items: center; position: relative; cursor: pointer; -webkit-touch-callout: none; user-select: none; }
+        
+        /* Standard Relic Frame */
         .relic-frame { width: 82px; height: 108px; border: 1px solid var(--crimson); background: #000; overflow: hidden; transition: 0.3s; }
         .relic-frame img { width: 100%; height: 100%; object-fit: cover; }
         .relic-name { margin-top: 8px; font-family: 'Cinzel'; font-size: 0.65rem; text-align: center; max-width: 90px; }
 
-        /* Folder Specific Styling */
-        .relic-frame.folder-icon { border-style: double; border-width: 3px; border-color: var(--gold); position: relative; }
-        .relic-frame.folder-icon::after { content: ""; position: absolute; top: 0; left: 0; width: 30%; height: 10px; background: var(--gold); }
+        /* GOTHIC FOLDER FRAME (Distinct from relics) */
+        .relic-frame.folder-icon { 
+            border: 1px solid var(--crimson);
+            outline: 2px solid var(--crimson); 
+            outline-offset: -4px;
+            background: linear-gradient(45deg, #050505, #111);
+        }
+        .relic-frame.folder-icon::before {
+            content: ""; position: absolute; top: 0; left: 0; width: 45%; height: 5px; background: var(--crimson); border-bottom: 1px solid var(--gold);
+        }
 
         #context-menu { display: none; position: fixed; z-index: 2000; background: #0a0a0a; border: 1px solid var(--gold); padding: 5px; box-shadow: 0 0 30px #000; }
         .menu-item { padding: 12px 25px; font-family: 'Cinzel'; font-size: 0.7rem; color: var(--gold); cursor: pointer; border-bottom: 1px solid #1a1a1a; }
@@ -47,20 +54,22 @@
         button { background: var(--crimson); color: white; border: none; padding: 8px 15px; cursor: pointer; font-family: 'Cinzel'; font-size: 0.7rem; width: 100%; }
         input, select { background: #000; border: 1px solid #333; color: #fff; padding: 8px; font-family: inherit; width: 100%; box-sizing: border-box; }
         .toggle-btn { background: transparent; border: 1px solid var(--gold); color: var(--gold); width: auto; }
-        #back-btn { display: none; margin: 10px; }
+        #back-btn { display: none; margin-right: 15px; }
     </style>
 </head>
 <body>
 
     <div id="top-controls">
-        <button id="back-btn" class="toggle-btn" onclick="goBack()">← Back</button>
-        <span id="status-text" style="font-family:'Cinzel'; font-size:0.7rem;">Archive</span>
+        <div style="display:flex; align-items:center;">
+            <button id="back-btn" class="toggle-btn" onclick="goBack()">← Back</button>
+            <span id="status-text" style="font-family:'Cinzel'; font-size:0.7rem; color:var(--gold);">Archive</span>
+        </div>
         <button id="edit-toggle" class="toggle-btn">Edit Mode</button>
     </div>
 
     <section id="admin-desk">
-        <input type="text" id="r-name" placeholder="Name">
-        <input type="text" id="r-url" placeholder="URL (Leave blank for Folder)">
+        <input type="text" id="r-name" placeholder="Relic/Folder Name">
+        <input type="text" id="r-url" placeholder="URL (Skip for Folder)">
         <select id="r-type"><option value="link">Link</option><option value="folder">Folder</option></select>
         <input type="file" id="r-file" accept="image/*">
         <button id="r-save">Commemorate</button>
@@ -70,9 +79,9 @@
 
     <div id="context-menu">
         <div class="menu-item" onclick="menuAction('edit')">Rename / Edit URL</div>
-        <div class="menu-item" onclick="document.getElementById('hidden-file-input').click()">New Portrait</div>
+        <div class="menu-item" onclick="document.getElementById('hidden-file-input').click()">Update Portrait</div>
         <div class="menu-item" onclick="menuAction('move')">Move to Folder</div>
-        <div class="menu-item" onclick="menuAction('delete')" style="color:var(--crimson);">Purge Relic</div>
+        <div class="menu-item" onclick="menuAction('delete')" style="color:var(--crimson);">Purge Item</div>
     </div>
     <input type="file" id="hidden-file-input" style="display:none" accept="image/*">
 
@@ -116,7 +125,6 @@
             const url = document.getElementById('r-url').value;
             const type = document.getElementById('r-type').value;
             const file = document.getElementById('r-file').files[0];
-            
             if(!name) return;
             
             const pushData = (img) => {
@@ -125,6 +133,7 @@
                     imgUrl: img, parent: currentFolder, timestamp: Date.now()
                 });
                 document.getElementById('r-name').value = '';
+                document.getElementById('r-url').value = '';
             };
 
             if(file) {
@@ -160,7 +169,7 @@
                     wrap.onmouseup = () => { 
                         if(!window.longPressed) {
                             if(isFolder) { enterFolder(id, d.name); }
-                            else { window.open(d.url, '_blank'); }
+                            else if(d.url) { window.open(d.url, '_blank'); }
                         }
                         clearTimeout(window.pTimer); 
                     };
@@ -199,13 +208,13 @@
         window.onclick = () => document.getElementById('context-menu').style.display = 'none';
 
         window.menuAction = (type) => {
-            if (type === 'delete' && confirm("Purge this relic?")) rtdb.ref('relics/' + selectedRelicId).remove();
+            if (type === 'delete' && confirm("Purge this item forever?")) rtdb.ref('relics/' + selectedRelicId).remove();
             if (type === 'edit') {
                 const n = prompt("New Name:"), u = prompt("New URL:");
                 if(n) rtdb.ref('relics/' + selectedRelicId).update({ name: n, url: u });
             }
             if (type === 'move') {
-                const targetName = prompt("Enter the EXACT name of the destination folder:");
+                const targetName = prompt("Move to which folder? (Type 'root' to go home)");
                 rtdb.ref('relics').once('value', snap => {
                     const items = snap.val();
                     const folderId = Object.keys(items).find(key => items[key].name === targetName && items[key].type === 'folder');
