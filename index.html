@@ -25,16 +25,34 @@
         #admin-desk { 
             display: none; padding: 15px; gap: 8px; flex-direction: column; 
             align-items: center; border: 1px solid var(--crimson); 
-            width: 300px; margin: 20px auto; background: #080808; border-radius: 4px;
+            width: 280px; margin: 20px auto; background: #080808; border-radius: 4px;
         }
 
-        #archive-grid { display: grid; padding: 40px; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 40px; width: 95%; }
+        /* RESPONSIVE GRID SETTINGS */
+        #archive-grid { 
+            display: grid; 
+            padding: 20px; 
+            /* Default: iPad/Desktop size (6 items per row) */
+            grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); 
+            gap: 20px 10px; 
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* iPhone specific (4 items per row) */
+        @media (max-width: 480px) {
+            #archive-grid {
+                grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+                padding: 10px;
+                gap: 15px 5px;
+            }
+        }
 
         .relic-wrapper { display: flex; flex-direction: column; align-items: center; position: relative; cursor: pointer; -webkit-touch-callout: none; user-select: none; }
         
-        /* OVAL RELIC FRAME */
+        /* OVAL RELIC FRAME (Scaled for density) */
         .relic-frame { 
-            width: 90px; height: 120px; 
+            width: 70px; height: 95px; 
             position: relative;
             display: flex; align-items: center; justify-content: center;
             transition: 0.3s ease;
@@ -43,29 +61,33 @@
         .relic-frame::before {
             content: "";
             position: absolute;
-            top: -10px; left: -10px; right: -10px; bottom: -10px;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 120'%3E%3Cellipse cx='50' cy='60' rx='40' ry='50' fill='none' stroke='%237a0000' stroke-width='2'/%3E%3Cellipse cx='50' cy='60' rx='36' ry='46' fill='none' stroke='%238c7340' stroke-width='0.5'/%3E%3Cpath d='M50 2 L55 10 L45 10 Z M50 118 L55 110 L45 110 Z M2 60 L10 55 L10 65 Z M98 60 L90 55 L90 65 Z' fill='%237a0000'/%3E%3C/svg%3E");
+            top: -6px; left: -6px; right: -6px; bottom: -6px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 120'%3E%3Cellipse cx='50' cy='60' rx='40' ry='50' fill='none' stroke='%237a0000' stroke-width='3'/%3E%3Cellipse cx='50' cy='60' rx='36' ry='46' fill='none' stroke='%238c7340' stroke-width='1'/%3E%3Cpath d='M50 2 L55 10 L45 10 Z M50 118 L55 110 L45 110 Z' fill='%237a0000'/%3E%3C/svg%3E");
             background-size: contain; background-repeat: no-repeat;
             pointer-events: none; z-index: 2;
         }
 
         .relic-frame img { 
-            width: 70px; height: 95px; 
+            width: 55px; height: 75px; 
             object-fit: cover; clip-path: ellipse(50% 50% at 50% 50%);
             filter: sepia(0.2) contrast(1.1);
         }
 
-        /* RECTANGLE FOLDER FRAME */
+        /* RECTANGLE FOLDER FRAME (Scaled for density) */
         .relic-frame.folder-icon { 
-            width: 82px; height: 108px;
+            width: 65px; height: 85px;
             background: #111; border: 2px solid var(--crimson);
-            outline: 1px solid var(--gold); outline-offset: -5px;
+            outline: 1px solid var(--gold); outline-offset: -4px;
             clip-path: none;
         }
         .relic-frame.folder-icon::before { display: none; }
         .relic-frame.folder-icon img { width: 100%; height: 100%; clip-path: none; opacity: 0.6; }
 
-        .relic-name { margin-top: 12px; font-family: 'Cinzel'; font-size: 0.65rem; text-align: center; color: var(--gold); }
+        .relic-name { 
+            margin-top: 8px; font-family: 'Cinzel'; font-size: 0.55rem; 
+            text-align: center; color: var(--gold); 
+            max-width: 80px; overflow: hidden; text-overflow: ellipsis;
+        }
 
         #context-menu { display: none; position: fixed; z-index: 2000; background: #0a0a0a; border: 1px solid var(--gold); padding: 5px; box-shadow: 0 0 30px #000; }
         .menu-item { padding: 12px 25px; font-family: 'Cinzel'; font-size: 0.7rem; color: var(--gold); cursor: pointer; border-bottom: 1px solid #1a1a1a; }
@@ -232,17 +254,13 @@
             if (type === 'edit') {
                 const newName = prompt("New Name (Cancel/Blank to keep current):");
                 const newUrl = prompt("New URL (Cancel/Blank to keep current):");
-                
                 let updates = {};
                 if (newName) updates.name = newName;
                 if (newUrl) updates.url = newUrl;
-                
-                if (Object.keys(updates).length > 0) {
-                    rtdb.ref('relics/' + selectedRelicId).update(updates);
-                }
+                if (Object.keys(updates).length > 0) rtdb.ref('relics/' + selectedRelicId).update(updates);
             }
             if (type === 'move') {
-                const targetName = prompt("Move to which folder? (Type 'root' to go home)");
+                const targetName = prompt("Target Folder Name (or 'root'):");
                 rtdb.ref('relics').once('value', snap => {
                     const items = snap.val();
                     const folderId = Object.keys(items).find(key => items[key].name === targetName && items[key].type === 'folder');
