@@ -23,9 +23,10 @@
         #top-controls { width: 100%; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1a1a1a; background: #000; box-sizing: border-box; }
         
         #archive-grid { 
-            display: grid; padding: 30px 10px; 
+            display: grid; padding: 15px 10px; /* Reduced vertical padding */
             grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); 
-            gap: 35px 10px; width: 100%; justify-items: center; align-items: center; box-sizing: border-box;
+            gap: 15px 5px; /* Reduced gaps by 50%+ */
+            width: 100%; justify-items: center; align-items: center; box-sizing: border-box;
         }
 
         .relic-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; cursor: pointer; -webkit-touch-callout: none; user-select: none; }
@@ -55,9 +56,11 @@
             padding: 2px 0; line-height: 1.1;
         }
 
-        .relic-name { margin-top: 12px; font-family: 'Cinzel'; font-size: 0.55rem; text-align: center; color: var(--gold); max-width: 80px; }
+        .relic-name { 
+            margin-top: 6px; /* Reduced from 12px */
+            font-family: 'Cinzel'; font-size: 0.55rem; text-align: center; color: var(--gold); max-width: 80px; 
+        }
 
-        /* UI Menus */
         #context-menu, #move-menu { display: none; position: fixed; z-index: 2000; background: #0a0a0a; border: 1px solid var(--gold); padding: 5px; min-width: 120px; }
         .menu-item { padding: 12px 20px; font-family: 'Cinzel'; font-size: 0.7rem; color: var(--gold); cursor: pointer; border-bottom: 1px solid #1a1a1a; }
         .menu-item:hover { background: var(--crimson); color: white; }
@@ -65,7 +68,7 @@
         button { background: var(--crimson); color: white; border: none; padding: 8px 15px; cursor: pointer; font-family: 'Cinzel'; font-size: 0.7rem; width: 100%; }
         input, select { background: #000; border: 1px solid #333; color: #fff; padding: 8px; width: 100%; box-sizing: border-box; }
         .toggle-btn { background: transparent; border: 1px solid var(--gold); color: var(--gold); width: auto; }
-        #admin-desk { display: none; padding: 15px; gap: 8px; flex-direction: column; align-items: center; border: 1px solid var(--crimson); width: 280px; margin: 20px auto; background: #080808; }
+        #admin-desk { display: none; padding: 10px; gap: 4px; flex-direction: column; align-items: center; border: 1px solid var(--crimson); width: 280px; margin: 10px auto; background: #080808; }
         #back-btn { display: none; margin-right: 15px; }
     </style>
 </head>
