@@ -25,23 +25,28 @@
         #archive-grid { 
             display: grid; padding: 10px; 
             grid-template-columns: repeat(auto-fill, 62px); 
-            gap: 6px 2px; width: 100%; max-width: 1200px;
+            gap: 12px 2px; width: 100%; max-width: 1200px;
             justify-content: center; align-items: start; box-sizing: border-box;
         }
 
         @media only screen and (max-width: 600px) {
-            #archive-grid { grid-template-columns: repeat(6, 1fr); gap: 8px 0px; padding: 10px 5px; }
+            #archive-grid { grid-template-columns: repeat(6, 1fr); gap: 12px 0px; padding: 10px 5px; }
         }
 
         .relic-wrapper { 
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
             position: relative; cursor: pointer; -webkit-touch-callout: none; user-select: none;
-            transition: transform 0.15s ease, opacity 0.15s ease;
+            transition: transform 0.2s cubic-bezier(0.2, 0, 0.2, 1), opacity 0.2s ease;
         }
         
-        .relic-wrapper.dragging { opacity: 0.1; transform: scale(0.8); }
-        /* Visual cue for insertion point */
-        .relic-wrapper.drag-over { border-left: 3px solid var(--gold); margin-left: -3px; }
+        /* Drag Visuals */
+        .relic-wrapper.dragging { opacity: 0.1; transform: scale(0.7); }
+        
+        /* Shifting animation when hovering between */
+        .relic-wrapper.drag-over { 
+            transform: translateX(10px); 
+            border-left: 2px solid var(--gold);
+        }
 
         .relic-frame { width: 50px; height: 68px; position: relative; display: flex; align-items: center; justify-content: center; pointer-events: none; }
         .relic-frame::before {
@@ -77,6 +82,7 @@
         
         #admin-desk { display: none; padding: 10px; gap: 4px; flex-direction: column; align-items: center; border: 1px solid var(--crimson); width: 250px; margin: 10px auto; background: #080808; }
         .toggle-btn { background: transparent; border: 1px solid var(--gold); color: var(--gold); width: auto; cursor: pointer; padding: 8px 15px; font-family: 'Cinzel'; font-size: 0.7rem; }
+        input, select { background: #000; border: 1px solid #333; color: #fff; padding: 8px; width: 100%; box-sizing: border-box; margin-bottom: 5px;}
     </style>
 </head>
 <body>
@@ -94,7 +100,7 @@
         <input type="text" id="r-url" placeholder="URL">
         <select id="r-type"><option value="link">Relic</option><option value="folder">Folder</option></select>
         <input type="file" id="r-file" accept="image/*">
-        <button id="r-save">Commemorate</button>
+        <button id="r-save" class="toggle-btn" style="background:var(--crimson); color:white; border:none; width:100%;">Commemorate</button>
     </section>
 
     <main id="archive-grid"></main>
@@ -158,10 +164,10 @@
                     const d = allRelics[id];
                     const wrap = document.createElement('div');
                     wrap.className = 'relic-wrapper';
-                    wrap.draggable = isEditMode;
-                    wrap.dataset.id = id;
-                    wrap.dataset.index = index;
-
+                    
+                    // Enable/Disable Draggable based on Edit Mode
+                    wrap.setAttribute('draggable', isEditMode);
+                    
                     if (d.type === 'folder') {
                         const children = Object.values(allRelics).filter(item => item.parent === id);
                         let namesHtml = children.map(c => `<div class="folder-text-entry">${c.name}</div>`).join('');
@@ -170,17 +176,30 @@
                         wrap.innerHTML = `<div class="relic-frame"><img src="${d.imgUrl || ''}"></div><span class="relic-name">${d.name}</span>`;
                     }
 
-                    // REORDER LOGIC: Drop item BETWEEN others
-                    wrap.ondragstart = (e) => { draggedId = id; wrap.classList.add('dragging'); };
-                    wrap.ondragend = () => wrap.classList.remove('dragging');
-                    wrap.ondragover = (e) => { e.preventDefault(); wrap.classList.add('drag-over'); };
-                    wrap.ondragleave = () => wrap.classList.remove('drag-over');
-                    wrap.ondrop = (e) => {
+                    // Drag Events
+                    wrap.addEventListener('dragstart', (e) => {
+                        if(!isEditMode) return;
+                        draggedId = id;
+                        wrap.classList.add('dragging');
+                        e.dataTransfer.effectAllowed = "move";
+                    });
+
+                    wrap.addEventListener('dragend', () => wrap.classList.remove('dragging'));
+
+                    wrap.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        if(draggedId !== id) wrap.classList.add('drag-over');
+                    });
+
+                    wrap.addEventListener('dragleave', () => wrap.classList.remove('drag-over'));
+
+                    wrap.addEventListener('drop', (e) => {
                         e.preventDefault();
                         wrap.classList.remove('drag-over');
-                        if (draggedId !== id) reorderRelics(draggedId, id);
-                    };
+                        if (draggedId && draggedId !== id) reorderRelics(draggedId, id);
+                    });
 
+                    // Interaction Logic
                     wrap.onmousedown = (e) => startPress(e, id);
                     wrap.ontouchstart = (e) => startPress(e, id);
                     wrap.onmouseup = () => { 
@@ -196,7 +215,6 @@
         }
 
         async function reorderRelics(sourceId, targetId) {
-            // Filter only items in the current folder view
             const siblings = Object.keys(allRelics)
                 .filter(id => allRelics[id].parent === currentFolder)
                 .sort((a, b) => (allRelics[a].sortOrder || 0) - (allRelics[b].sortOrder || 0));
@@ -204,19 +222,17 @@
             const fromIndex = siblings.indexOf(sourceId);
             const toIndex = siblings.indexOf(targetId);
 
-            // Move sourceId to the new position in the array
             siblings.splice(fromIndex, 1);
             siblings.splice(toIndex, 0, sourceId);
 
-            // Batch update the database with new sequence
             const updates = {};
             siblings.forEach((id, i) => {
                 updates[`relics/${id}/sortOrder`] = i;
             });
             await rtdb.ref().update(updates);
+            draggedId = null;
         }
 
-        // PRESERVED FUNCTIONS
         function enterFolder(id, name) { currentFolder = id; document.getElementById('status-text').innerText = name; document.getElementById('back-btn').style.display = 'block'; loadRelics(); }
         function goBack() { currentFolder = 'root'; document.getElementById('status-text').innerText = "Archive"; document.getElementById('back-btn').style.display = 'none'; loadRelics(); }
 
@@ -261,7 +277,7 @@
                 reader.readAsDataURL(file);
             } else { pushData(""); }
         };
-        // Move to folder logic preserved
+
         function showMoveMenu() {
             const moveMenu = document.getElementById('move-menu');
             const contextMenu = document.getElementById('context-menu');
@@ -277,6 +293,12 @@
             contextMenu.style.display = 'none';
         }
         function executeMove(targetId) { rtdb.ref('relics/' + selectedRelicId).update({ parent: targetId }); document.getElementById('move-menu').style.display = 'none'; }
+
+        document.getElementById('hidden-file-input').onchange = (e) => {
+            const reader = new FileReader();
+            reader.onload = (ev) => rtdb.ref('relics/' + selectedRelicId).update({ imgUrl: ev.target.result });
+            reader.readAsDataURL(e.target.files[0]);
+        };
     </script>
 </body>
 </html>
