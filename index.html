@@ -23,11 +23,15 @@
         #top-controls { width: 100%; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1a1a1a; background: #000; box-sizing: border-box; }
         
         #archive-grid { 
-            display: grid; padding: 10px 5px; 
-            grid-template-columns: repeat(auto-fill, minmax(65px, 1fr)); 
-            /* Gaps reduced by 40% from previous version */
-            gap: 9px 3px; 
-            width: 100%; justify-items: center; align-items: center; box-sizing: border-box;
+            display: grid; padding: 10px; 
+            /* Fixed width columns instead of 1fr to force them closer together */
+            grid-template-columns: repeat(auto-fill, 62px); 
+            gap: 6px 2px; /* Slashed gaps further */
+            width: 100%; 
+            max-width: 1200px;
+            justify-content: center; /* Keeps the tight cluster centered */
+            align-items: start; 
+            box-sizing: border-box;
         }
 
         .relic-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; cursor: pointer; -webkit-touch-callout: none; user-select: none; }
@@ -44,25 +48,28 @@
             width: 47px; height: 64px; background: rgba(10, 10, 10, 0.95); 
             border: 1.8px solid var(--crimson); outline: 1px solid var(--gold); outline-offset: -4px;
             display: flex; flex-direction: column;
-            padding: 10px 5px; gap: 1.5px; overflow-y: auto;
+            padding: 8px 4px; gap: 1px; overflow-y: auto;
             box-shadow: inset 0 0 10px #000;
         }
-        .folder-icon::-webkit-scrollbar { width: 1.8px; }
+        .folder-icon::-webkit-scrollbar { width: 1.5px; }
         .folder-icon::-webkit-scrollbar-thumb { background: var(--crimson); }
 
         .folder-text-entry {
             font-family: 'Cinzel', serif; font-size: 0.38rem; color: var(--gold);
             text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-            text-transform: uppercase; border-bottom: 0.6px solid rgba(140, 115, 64, 0.15);
-            padding: 1.5px 0; line-height: 1.1;
+            text-transform: uppercase; border-bottom: 0.5px solid rgba(140, 115, 64, 0.15);
+            padding: 1px 0; line-height: 1;
         }
 
         .relic-name { 
-            /* Spacing between frame and name reduced by 40% */
-            margin-top: 3px; 
-            font-family: 'Cinzel'; font-size: 0.5rem; 
-            text-align: center; color: var(--gold); max-width: 65px; 
+            margin-top: 1px; /* Minimum possible spacing */
+            font-family: 'Cinzel'; font-size: 0.48rem; 
+            text-align: center; color: var(--gold); 
+            width: 60px; /* Constrain width to keep items tight */
             line-height: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         #context-menu, #move-menu { display: none; position: fixed; z-index: 2000; background: #0a0a0a; border: 1px solid var(--gold); padding: 5px; min-width: 120px; }
@@ -108,6 +115,7 @@
     <input type="file" id="hidden-file-input" style="display:none" accept="image/*">
 
     <script>
+        // ... Logic and Config Preserved Exactly ...
         const firebaseConfig = {
             apiKey: "AIzaSyAuNbY1Xv_ZF3kJah20qqPBz-IiiMAR9gE",
             authDomain: "aidenstartpage.firebaseapp.com",
