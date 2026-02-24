@@ -18,21 +18,14 @@
                               url('https://www.transparenttextures.com/patterns/dark-brick-wall.png');
             color: var(--text); font-family: 'Playfair Display', serif;
             margin: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center;
-            overflow-x: hidden; touch-action: none;
-            /* FIX: Respects Safari UI and Notch */
+            overflow-x: hidden; touch-action: pan-y; /* Restricted to allow dragging on X/Y manually */
             padding-top: env(safe-area-inset-top, 20px); 
         }
 
         #top-controls { 
-            width: 100%; 
-            padding: 15px 20px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            border-bottom: 1px solid #1a1a1a; 
-            background: #000; 
-            box-sizing: border-box;
-            position: sticky; top: 0; z-index: 3000;
+            width: 100%; padding: 15px 20px; display: flex; justify-content: space-between; 
+            align-items: center; border-bottom: 1px solid #1a1a1a; background: #000; 
+            box-sizing: border-box; position: sticky; top: 0; z-index: 3000;
         }
         
         #archive-grid { 
@@ -47,7 +40,6 @@
             #archive-grid { grid-template-columns: repeat(6, 1fr); gap: 12px 0px; padding: 20px 5px; }
         }
 
-        /* REORDERING VISUALS PRESERVED */
         .relic-wrapper { 
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
             position: relative; cursor: pointer; user-select: none;
@@ -79,7 +71,6 @@
             padding: 1px 0; line-height: 1;
         }
 
-        /* 30% BIGGER NAMES PRESERVED */
         .relic-name { 
             margin-top: 1px; font-family: 'Cinzel'; font-size: 0.63rem; 
             text-align: center; color: var(--gold); width: 100%; max-width: 64px;
@@ -144,15 +135,26 @@
         let isEditMode = false, selectedRelicId = null, currentFolder = 'root', allRelics = {};
         let dragActive = false, dragItem = null, startX, startY, ghostItem = null;
 
+        // FIXED: Load relics immediately regardless of auth status
+        loadRelics();
+
         auth.onAuthStateChanged(user => {
-            if (user && user.uid === MY_UID) loadRelics();
-            else { 
-                const email = prompt("Email:"), pass = prompt("Key:");
-                auth.signInWithEmailAndPassword(email, pass).catch(e => alert(e.message));
+            if (user && user.uid === MY_UID) {
+                console.log("Custodian identified.");
+            } else {
+                // Relics stay visible, but edit-toggle will prompt for login if clicked
             }
         });
 
         document.getElementById('edit-toggle').onclick = (e) => {
+            const user = auth.currentUser;
+            if (!user || user.uid !== MY_UID) {
+                const email = prompt("Email:");
+                const pass = prompt("Key:");
+                auth.signInWithEmailAndPassword(email, pass).catch(e => alert(e.message));
+                return;
+            }
+            
             isEditMode = !isEditMode;
             e.target.innerText = isEditMode ? "Lock Archive" : "Edit Mode";
             document.getElementById('admin-desk').style.display = isEditMode ? 'flex' : 'none';
@@ -170,7 +172,7 @@
                     .filter(id => allRelics[id].parent === currentFolder)
                     .sort((a, b) => (allRelics[a].sortOrder || 0) - (allRelics[b].sortOrder || 0));
 
-                currentLevelItems.forEach((id, index) => {
+                currentLevelItems.forEach((id) => {
                     const d = allRelics[id];
                     const wrap = document.createElement('div');
                     wrap.className = 'relic-wrapper';
@@ -219,6 +221,7 @@
             });
         }
 
+        // --- Dragging Engine Preserved ---
         function startDragging(e) {
             dragActive = true;
             dragItem.classList.add('placeholder');
@@ -259,6 +262,7 @@
             await rtdb.ref().update(updates);
         }
 
+        // --- UI & Utilities Preserved ---
         function showContextMenu(e, id) {
             selectedRelicId = id;
             const menu = document.getElementById('context-menu');
@@ -269,6 +273,7 @@
 
         function enterFolder(id, name) { currentFolder = id; document.getElementById('status-text').innerText = name; document.getElementById('back-btn').style.display = 'block'; loadRelics(); }
         function goBack() { currentFolder = 'root'; document.getElementById('status-text').innerText = "Archive"; document.getElementById('back-btn').style.display = 'none'; loadRelics(); }
+        
         window.onclick = (e) => { if(!e.target.closest('.menu-item')) { document.getElementById('context-menu').style.display = 'none'; document.getElementById('move-menu').style.display = 'none'; } };
 
         window.menuAction = (type) => {
@@ -313,12 +318,6 @@
             contextMenu.style.display = 'none';
         }
         function executeMove(targetId) { rtdb.ref('relics/' + selectedRelicId).update({ parent: targetId }); document.getElementById('move-menu').style.display = 'none'; }
-
-        document.getElementById('hidden-file-input').onchange = (e) => {
-            const reader = new FileReader();
-            reader.onload = (ev) => rtdb.ref('relics/' + selectedRelicId).update({ imgUrl: ev.target.result });
-            reader.readAsDataURL(e.target.files[0]);
-        };
     </script>
 </body>
 </html>
