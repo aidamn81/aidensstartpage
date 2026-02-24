@@ -22,43 +22,26 @@
 
         #top-controls { width: 100%; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1a1a1a; background: #000; box-sizing: border-box; }
         
-        #admin-desk { 
-            display: none; padding: 15px; gap: 8px; flex-direction: column; 
-            align-items: center; border: 1px solid var(--crimson); 
-            width: 280px; margin: 20px auto; background: #080808; border-radius: 4px;
-        }
-
-        /* CENTERED GRID ALIGNMENT */
         #archive-grid { 
             display: grid; 
-            padding: 20px; 
+            padding: 30px 10px; 
+            /* iPad: 6 per row | iPhone: 4 per row */
             grid-template-columns: repeat(auto-fill, minmax(85px, 1fr)); 
-            gap: 25px 10px; 
+            gap: 30px 5px; 
             width: 100%;
-            max-width: 1200px;
+            justify-items: center; 
+            align-items: center;
             box-sizing: border-box;
-            justify-items: center; /* Centers items horizontally in the cell */
-            align-items: center;    /* Centers items vertically in the cell */
         }
 
         @media (max-width: 480px) {
-            #archive-grid {
-                grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
-                padding: 10px;
-                gap: 20px 5px;
-            }
+            #archive-grid { grid-template-columns: repeat(auto-fill, minmax(75px, 1fr)); }
         }
 
         .relic-wrapper { 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center;
-            position: relative; 
-            cursor: pointer; 
-            -webkit-touch-callout: none; 
-            user-select: none; 
-            text-align: center;
+            display: flex; flex-direction: column; align-items: center; 
+            justify-content: center; position: relative; cursor: pointer; 
+            -webkit-touch-callout: none; user-select: none;
         }
         
         /* OVAL RELIC FRAME */
@@ -66,61 +49,58 @@
             width: 70px; height: 95px; 
             position: relative;
             display: flex; align-items: center; justify-content: center;
-            transition: 0.3s ease;
         }
 
         .relic-frame::before {
             content: "";
             position: absolute;
-            top: -6px; left: -6px; right: -6px; bottom: -6px;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 120'%3E%3Cellipse cx='50' cy='60' rx='40' ry='50' fill='none' stroke='%237a0000' stroke-width='3'/%3E%3Cellipse cx='50' cy='60' rx='36' ry='46' fill='none' stroke='%238c7340' stroke-width='1'/%3E%3Cpath d='M50 2 L55 10 L45 10 Z M50 118 L55 110 L45 110 Z' fill='%237a0000'/%3E%3C/svg%3E");
+            top: -8px; left: -8px; right: -8px; bottom: -8px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 120'%3E%3Cellipse cx='50' cy='60' rx='40' ry='50' fill='none' stroke='%237a0000' stroke-width='3'/%3E%3Cellipse cx='50' cy='60' rx='36' ry='46' fill='none' stroke='%238c7340' stroke-width='1.5'/%3E%3Cpath d='M50 2 L55 10 L45 10 Z M50 118 L55 110 L45 110 Z' fill='%237a0000'/%3E%3C/svg%3E");
             background-size: contain; background-repeat: no-repeat;
             pointer-events: none; z-index: 5;
         }
 
         .relic-frame img { 
-            width: 55px; height: 75px; 
+            width: 58px; height: 80px; 
             object-fit: cover; clip-path: ellipse(50% 50% at 50% 50%);
-            filter: sepia(0.2) contrast(1.1);
+            filter: sepia(0.3) contrast(1.1);
         }
 
-        /* TRANSPARENT RECTANGLE FOLDER */
+        /* THE SEE-THROUGH FOLDER */
         .relic-frame.folder-icon { 
-            width: 65px; height: 85px;
-            background: rgba(122, 0, 0, 0.15); /* Transparent Crimson Tint */
+            width: 65px; height: 88px;
+            background: rgba(40, 0, 0, 0.3); /* Dark transparent red tint */
             border: 2px solid var(--crimson);
-            outline: 1px solid var(--gold); outline-offset: -4px;
+            outline: 1px solid var(--gold); outline-offset: -5px;
             clip-path: none;
-            backdrop-filter: blur(2px); /* Slight blur for "glass" effect */
-            z-index: 1;
+            backdrop-filter: blur(3px); /* Makes the "glass" look real */
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.8);
+            overflow: hidden;
         }
 
-        .relic-frame.folder-icon::before { display: none; }
-        
-        .relic-frame.folder-icon img { 
-            width: 100%; height: 100%; 
-            clip-path: none; 
-            opacity: 0.4; /* Reveals relic through the "cover" */
-            filter: grayscale(1) sepia(0.5);
+        .relic-frame.folder-icon::before { display: none; } /* Remove oval frame */
+
+        .relic-frame.folder-icon img {
+            width: 100%; height: 100%;
+            clip-path: none;
+            opacity: 0.35; /* This creates the "seen through cover" look */
+            filter: grayscale(100%) brightness(0.6);
+            transform: scale(1.1);
         }
 
-        /* Name Alignment */
         .relic-name { 
-            margin-top: 10px; 
-            font-family: 'Cinzel'; 
-            font-size: 0.55rem; 
-            color: var(--gold); 
-            max-width: 80px;
-            line-height: 1.2;
+            margin-top: 12px; font-family: 'Cinzel'; font-size: 0.55rem; 
+            text-align: center; color: var(--gold); max-width: 80px;
         }
 
-        #context-menu { display: none; position: fixed; z-index: 2000; background: #0a0a0a; border: 1px solid var(--gold); padding: 5px; box-shadow: 0 0 30px #000; }
+        /* Context Menu & UI elements preserved from previous version */
+        #context-menu { display: none; position: fixed; z-index: 2000; background: #0a0a0a; border: 1px solid var(--gold); padding: 5px; }
         .menu-item { padding: 12px 25px; font-family: 'Cinzel'; font-size: 0.7rem; color: var(--gold); cursor: pointer; border-bottom: 1px solid #1a1a1a; }
         .menu-item:hover { background: var(--crimson); color: white; }
-
         button { background: var(--crimson); color: white; border: none; padding: 8px 15px; cursor: pointer; font-family: 'Cinzel'; font-size: 0.7rem; width: 100%; }
-        input, select { background: #000; border: 1px solid #333; color: #fff; padding: 8px; font-family: inherit; width: 100%; box-sizing: border-box; }
+        input, select { background: #000; border: 1px solid #333; color: #fff; padding: 8px; width: 100%; box-sizing: border-box; }
         .toggle-btn { background: transparent; border: 1px solid var(--gold); color: var(--gold); width: auto; }
+        #admin-desk { display: none; padding: 15px; gap: 8px; flex-direction: column; align-items: center; border: 1px solid var(--crimson); width: 280px; margin: 20px auto; background: #080808; }
         #back-btn { display: none; margin-right: 15px; }
     </style>
 </head>
@@ -136,7 +116,7 @@
 
     <section id="admin-desk">
         <input type="text" id="r-name" placeholder="Name">
-        <input type="text" id="r-url" placeholder="URL (Skip for Folder)">
+        <input type="text" id="r-url" placeholder="Link (Optional for Edit)">
         <select id="r-type"><option value="link">Relic</option><option value="folder">Folder</option></select>
         <input type="file" id="r-file" accept="image/*">
         <button id="r-save">Commemorate</button>
@@ -153,7 +133,7 @@
     <input type="file" id="hidden-file-input" style="display:none" accept="image/*">
 
     <script>
-        // --- ALL PREVIOUS FIREBASE AND NAVIGATION LOGIC PRESERVED ---
+        // Database Config
         const firebaseConfig = {
             apiKey: "AIzaSyAuNbY1Xv_ZF3kJah20qqPBz-IiiMAR9gE",
             authDomain: "aidenstartpage.firebaseapp.com",
@@ -169,15 +149,12 @@
         const auth = firebase.auth();
         const MY_UID = "zrRGmp8WHDhK1h9T486PTqegdt12";
         
-        let isEditMode = false;
-        let selectedRelicId = null;
-        let currentFolder = 'root';
+        let isEditMode = false, selectedRelicId = null, currentFolder = 'root';
 
         auth.onAuthStateChanged(user => {
             if (user && user.uid === MY_UID) { loadRelics(); } 
             else { 
-                const email = prompt("Custodian Email:");
-                const pass = prompt("Key:");
+                const email = prompt("Email:"), pass = prompt("Key:");
                 auth.signInWithEmailAndPassword(email, pass).catch(e => alert(e.message));
             }
         });
@@ -220,12 +197,7 @@
                     const wrap = document.createElement('div');
                     wrap.className = 'relic-wrapper';
                     const isFolder = d.type === 'folder';
-                    wrap.innerHTML = `
-                        <div class="relic-frame ${isFolder ? 'folder-icon' : ''}">
-                            ${d.imgUrl ? `<img src="${d.imgUrl}">` : ''}
-                        </div>
-                        <span class="relic-name">${d.name}</span>
-                    `;
+                    wrap.innerHTML = `<div class="relic-frame ${isFolder ? 'folder-icon' : ''}">${d.imgUrl ? `<img src="${d.imgUrl}">` : ''}</div><span class="relic-name">${d.name}</span>`;
                     wrap.onmousedown = (e) => startPress(e, id);
                     wrap.ontouchstart = (e) => startPress(e, id);
                     wrap.onmouseup = () => { 
@@ -256,8 +228,7 @@
 
         function startPress(e, id) {
             if(!isEditMode) return;
-            window.longPressed = false;
-            selectedRelicId = id;
+            window.longPressed = false; selectedRelicId = id;
             window.pTimer = setTimeout(() => { 
                 window.longPressed = true; 
                 const menu = document.getElementById('context-menu');
@@ -272,8 +243,8 @@
         window.menuAction = (type) => {
             if (type === 'delete' && confirm("Purge this item?")) rtdb.ref('relics/' + selectedRelicId).remove();
             if (type === 'edit') {
-                const newName = prompt("New Name (Cancel/Blank to keep current):");
-                const newUrl = prompt("New URL (Cancel/Blank to keep current):");
+                const newName = prompt("New Name:");
+                const newUrl = prompt("New URL (Optional):");
                 let updates = {};
                 if (newName) updates.name = newName;
                 if (newUrl) updates.url = newUrl;
