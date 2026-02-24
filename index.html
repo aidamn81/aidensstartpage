@@ -39,12 +39,12 @@
         }
         .relic-frame img { width: 58px; height: 80px; object-fit: cover; clip-path: ellipse(50% 50% at 50% 50%); filter: sepia(0.3) contrast(1.1); }
 
-        /* THE FOLDER: TEXT LIST ONLY */
+        /* THE FOLDER: TEXT LIST ONLY (Updated Font Size) */
         .folder-icon { 
             width: 65px; height: 88px; background: rgba(10, 10, 10, 0.95); 
             border: 2px solid var(--crimson); outline: 1px solid var(--gold); outline-offset: -5px;
             display: flex; flex-direction: column;
-            padding: 12px 6px; gap: 1px; overflow-y: auto;
+            padding: 14px 6px; gap: 2px; overflow-y: auto;
             box-shadow: inset 0 0 15px #000;
         }
         /* Custom scrollbar for folders */
@@ -53,20 +53,21 @@
 
         .folder-text-entry {
             font-family: 'Cinzel', serif;
-            font-size: 0.35rem; /* Tiny but legible Cinzel */
+            font-size: 0.49rem; /* Increased by 40% from 0.35rem */
             color: var(--gold);
             text-align: center;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             text-transform: uppercase;
-            border-bottom: 1px solid rgba(140, 115, 64, 0.1);
-            padding: 1px 0;
+            border-bottom: 1px solid rgba(140, 115, 64, 0.15);
+            padding: 2px 0;
+            line-height: 1.1;
         }
 
         .relic-name { margin-top: 12px; font-family: 'Cinzel'; font-size: 0.55rem; text-align: center; color: var(--gold); max-width: 80px; }
 
-        /* Admin UI & Context Menu */
+        /* Admin UI & Context Menu Preserved */
         #context-menu { display: none; position: fixed; z-index: 2000; background: #0a0a0a; border: 1px solid var(--gold); padding: 5px; }
         .menu-item { padding: 12px 25px; font-family: 'Cinzel'; font-size: 0.7rem; color: var(--gold); cursor: pointer; border-bottom: 1px solid #1a1a1a; }
         .menu-item:hover { background: var(--crimson); color: white; }
