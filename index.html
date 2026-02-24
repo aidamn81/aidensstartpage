@@ -18,14 +18,14 @@
                               url('https://www.transparenttextures.com/patterns/dark-brick-wall.png');
             color: var(--text); font-family: 'Playfair Display', serif;
             margin: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center;
-            overflow-x: hidden; touch-action: pan-y; /* Restricted to allow dragging on X/Y manually */
-            padding-top: env(safe-area-inset-top, 20px); 
+            padding-top: calc(44px + env(safe-area-inset-top, 20px)); 
         }
 
         #top-controls { 
             width: 100%; padding: 15px 20px; display: flex; justify-content: space-between; 
             align-items: center; border-bottom: 1px solid #1a1a1a; background: #000; 
-            box-sizing: border-box; position: sticky; top: 0; z-index: 3000;
+            box-sizing: border-box; position: fixed; top: 0; z-index: 3000;
+            padding-top: env(safe-area-inset-top, 20px);
         }
         
         #archive-grid { 
@@ -33,7 +33,7 @@
             grid-template-columns: repeat(auto-fill, 62px); 
             gap: 12px 2px; width: 100%; max-width: 1200px;
             justify-content: center; align-items: start; box-sizing: border-box;
-            position: relative;
+            position: relative; margin-top: 20px;
         }
 
         @media only screen and (max-width: 600px) {
@@ -43,12 +43,12 @@
         .relic-wrapper { 
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
             position: relative; cursor: pointer; user-select: none;
-            transition: transform 0.2s ease; touch-action: none;
+            transition: transform 0.2s ease;
         }
         
-        .relic-wrapper.is-dragging { opacity: 0.5; transform: scale(1.1); z-index: 1000; pointer-events: none; position: absolute; }
-        .relic-wrapper.placeholder { opacity: 0.1; transform: scale(0.8); }
-        .relic-wrapper.shift-right { transform: translateX(15px); border-left: 2px solid var(--gold); }
+        /* Dragging Visuals */
+        .relic-wrapper.dragging { opacity: 0.3; transform: scale(0.8); }
+        .relic-wrapper.drag-over { border-left: 2px solid var(--gold); transform: translateX(5px); }
 
         .relic-frame { width: 50px; height: 68px; position: relative; display: flex; align-items: center; justify-content: center; pointer-events: none; }
         .relic-frame::before {
@@ -108,10 +108,10 @@
     <main id="archive-grid"></main>
 
     <div id="context-menu">
-        <div class="menu-item" onclick="menuAction('edit')">Edit</div>
-        <div class="menu-item" onclick="document.getElementById('hidden-file-input').click()">Portrait</div>
+        <div class="menu-item" onclick="menuAction('edit')">Rename / Edit</div>
+        <div class="menu-item" onclick="document.getElementById('hidden-file-input').click()">Change Portrait</div>
         <div class="menu-item" onclick="showMoveMenu()">Move To...</div>
-        <div class="menu-item" onclick="menuAction('delete')" style="color:var(--crimson);">Purge</div>
+        <div class="menu-item" onclick="menuAction('delete')" style="color:var(--crimson);">Purge (Delete)</div>
     </div>
 
     <div id="move-menu"></div>
@@ -133,18 +133,9 @@
         const MY_UID = "zrRGmp8WHDhK1h9T486PTqegdt12";
 
         let isEditMode = false, selectedRelicId = null, currentFolder = 'root', allRelics = {};
-        let dragActive = false, dragItem = null, startX, startY, ghostItem = null;
+        let draggedId = null;
 
-        // FIXED: Load relics immediately regardless of auth status
-        loadRelics();
-
-        auth.onAuthStateChanged(user => {
-            if (user && user.uid === MY_UID) {
-                console.log("Custodian identified.");
-            } else {
-                // Relics stay visible, but edit-toggle will prompt for login if clicked
-            }
-        });
+        window.addEventListener('load', loadRelics);
 
         document.getElementById('edit-toggle').onclick = (e) => {
             const user = auth.currentUser;
@@ -154,7 +145,6 @@
                 auth.signInWithEmailAndPassword(email, pass).catch(e => alert(e.message));
                 return;
             }
-            
             isEditMode = !isEditMode;
             e.target.innerText = isEditMode ? "Lock Archive" : "Edit Mode";
             document.getElementById('admin-desk').style.display = isEditMode ? 'flex' : 'none';
@@ -176,7 +166,7 @@
                     const d = allRelics[id];
                     const wrap = document.createElement('div');
                     wrap.className = 'relic-wrapper';
-                    wrap.dataset.id = id;
+                    wrap.setAttribute('draggable', isEditMode);
 
                     if (d.type === 'folder') {
                         const children = Object.values(allRelics).filter(item => item.parent === id);
@@ -186,69 +176,26 @@
                         wrap.innerHTML = `<div class="relic-frame"><img src="${d.imgUrl || ''}"></div><span class="relic-name">${d.name}</span>`;
                     }
 
-                    wrap.onpointerdown = (e) => {
-                        if(!isEditMode) return;
-                        window.longPressed = false;
-                        window.pTimer = setTimeout(() => { 
-                            window.longPressed = true;
-                            showContextMenu(e, id);
-                        }, 700);
-                        dragItem = wrap; startX = e.clientX; startY = e.clientY;
-                        wrap.setPointerCapture(e.pointerId);
-                    };
+                    // RESTORED: Native Drag Events
+                    wrap.ondragstart = (e) => { if(!isEditMode) return; draggedId = id; wrap.classList.add('dragging'); };
+                    wrap.ondragend = () => wrap.classList.remove('dragging');
+                    wrap.ondragover = (e) => { e.preventDefault(); if(draggedId !== id) wrap.classList.add('drag-over'); };
+                    wrap.ondragleave = () => wrap.classList.remove('drag-over');
+                    wrap.ondrop = (e) => { e.preventDefault(); wrap.classList.remove('drag-over'); if(draggedId && draggedId !== id) reorderRelics(draggedId, id); };
 
-                    wrap.onpointermove = (e) => {
-                        if(!dragItem || window.longPressed) return;
-                        const dist = Math.hypot(e.clientX - startX, e.clientY - startY);
-                        if(dist > 10) {
-                            clearTimeout(window.pTimer);
-                            if(!dragActive) startDragging(e);
-                            updateDragging(e);
-                        }
-                    };
-
-                    wrap.onpointerup = (e) => {
-                        clearTimeout(window.pTimer);
-                        if(dragActive) endDragging(e);
-                        else if(!window.longPressed) {
+                    // Long Press for Menu
+                    wrap.onmousedown = (e) => startPress(e, id);
+                    wrap.ontouchstart = (e) => startPress(e, id);
+                    wrap.onmouseup = () => { 
+                        if(!window.longPressed) {
                             if(d.type === 'folder') enterFolder(id, d.name);
                             else if(d.url) window.open(d.url, '_blank');
                         }
-                        dragItem = null; dragActive = false;
+                        clearTimeout(window.pTimer); 
                     };
                     grid.appendChild(wrap);
                 });
             });
-        }
-
-        // --- Dragging Engine Preserved ---
-        function startDragging(e) {
-            dragActive = true;
-            dragItem.classList.add('placeholder');
-            ghostItem = dragItem.cloneNode(true);
-            ghostItem.classList.remove('placeholder');
-            ghostItem.classList.add('is-dragging');
-            document.body.appendChild(ghostItem);
-        }
-
-        function updateDragging(e) {
-            ghostItem.style.left = `${e.pageX - 31}px`;
-            ghostItem.style.top = `${e.pageY - 40}px`;
-            const target = document.elementsFromPoint(e.clientX, e.clientY).find(el => el.classList.contains('relic-wrapper') && el !== dragItem && el !== ghostItem);
-            document.querySelectorAll('.relic-wrapper').forEach(el => el.classList.remove('shift-right'));
-            if(target) target.classList.add('shift-right');
-        }
-
-        async function endDragging(e) {
-            const target = document.elementsFromPoint(e.clientX, e.clientY).find(el => el.classList.contains('relic-wrapper') && el !== dragItem && el !== ghostItem);
-            if(target) {
-                const sourceId = dragItem.dataset.id;
-                const targetId = target.dataset.id;
-                await reorderRelics(sourceId, targetId);
-            }
-            if(ghostItem) ghostItem.remove();
-            if(dragItem) dragItem.classList.remove('placeholder');
-            document.querySelectorAll('.relic-wrapper').forEach(el => el.classList.remove('shift-right'));
         }
 
         async function reorderRelics(sourceId, targetId) {
@@ -260,30 +207,44 @@
             const updates = {};
             siblings.forEach((id, i) => { updates[`relics/${id}/sortOrder`] = i; });
             await rtdb.ref().update(updates);
+            draggedId = null;
         }
 
-        // --- UI & Utilities Preserved ---
-        function showContextMenu(e, id) {
-            selectedRelicId = id;
-            const menu = document.getElementById('context-menu');
-            menu.style.display = 'block';
-            menu.style.left = e.pageX + 'px';
-            menu.style.top = e.pageY + 'px';
+        function startPress(e, id) {
+            if(!isEditMode) return;
+            window.longPressed = false; selectedRelicId = id;
+            window.pTimer = setTimeout(() => { 
+                window.longPressed = true; 
+                const menu = document.getElementById('context-menu');
+                menu.style.display = 'block';
+                const px = (e.pageX || (e.touches ? e.touches[0].pageX : 0));
+                const py = (e.pageY || (e.touches ? e.touches[0].pageY : 0));
+                menu.style.left = px + 'px'; menu.style.top = py + 'px';
+            }, 700);
         }
 
+        // Context Menu Actions (Rename, Move, Delete w/ Confirmation)
+        window.menuAction = (type) => {
+            if (type === 'delete' && confirm("Are you sure you wish to purge this relic from the Archive?")) {
+                rtdb.ref('relics/' + selectedRelicId).remove();
+            }
+            if (type === 'edit') {
+                const newName = prompt("Rename Relic:", allRelics[selectedRelicId].name);
+                const newUrl = prompt("Edit URL:", allRelics[selectedRelicId].url);
+                if (newName !== null || newUrl !== null) {
+                    rtdb.ref('relics/' + selectedRelicId).update({ 
+                        name: newName || allRelics[selectedRelicId].name, 
+                        url: newUrl || allRelics[selectedRelicId].url 
+                    });
+                }
+            }
+            document.getElementById('context-menu').style.display = 'none';
+        };
+
+        // Navigation & Admin Preserved
         function enterFolder(id, name) { currentFolder = id; document.getElementById('status-text').innerText = name; document.getElementById('back-btn').style.display = 'block'; loadRelics(); }
         function goBack() { currentFolder = 'root'; document.getElementById('status-text').innerText = "Archive"; document.getElementById('back-btn').style.display = 'none'; loadRelics(); }
-        
         window.onclick = (e) => { if(!e.target.closest('.menu-item')) { document.getElementById('context-menu').style.display = 'none'; document.getElementById('move-menu').style.display = 'none'; } };
-
-        window.menuAction = (type) => {
-            if (type === 'delete' && confirm("Purge with confirmation?")) rtdb.ref('relics/' + selectedRelicId).remove();
-            if (type === 'edit') {
-                const newName = prompt("Name:", allRelics[selectedRelicId].name);
-                const newUrl = prompt("URL:", allRelics[selectedRelicId].url);
-                if (newName || newUrl) rtdb.ref('relics/' + selectedRelicId).update({ name: newName || allRelics[selectedRelicId].name, url: newUrl || allRelics[selectedRelicId].url });
-            }
-        };
 
         document.getElementById('r-save').onclick = async () => {
             const name = document.getElementById('r-name').value;
@@ -307,17 +268,15 @@
             const moveMenu = document.getElementById('move-menu');
             const contextMenu = document.getElementById('context-menu');
             moveMenu.innerHTML = '<div class="menu-item" onclick="executeMove(\'root\')">Archive (Root)</div>';
-            Object.keys(allRelics).forEach(id => {
-                if(allRelics[id].type === 'folder' && id !== selectedRelicId) {
-                    moveMenu.innerHTML += `<div class="menu-item" onclick="executeMove('${id}')">${allRelics[id].name}</div>`;
-                }
-            });
-            moveMenu.style.display = 'block';
-            moveMenu.style.left = contextMenu.style.left;
-            moveMenu.style.top = contextMenu.style.top;
-            contextMenu.style.display = 'none';
+            Object.keys(allRelics).forEach(id => { if(allRelics[id].type === 'folder' && id !== selectedRelicId) moveMenu.innerHTML += `<div class="menu-item" onclick="executeMove('${id}')">${allRelics[id].name}</div>`; });
+            moveMenu.style.display = 'block'; moveMenu.style.left = contextMenu.style.left; moveMenu.style.top = contextMenu.style.top; contextMenu.style.display = 'none';
         }
         function executeMove(targetId) { rtdb.ref('relics/' + selectedRelicId).update({ parent: targetId }); document.getElementById('move-menu').style.display = 'none'; }
+        document.getElementById('hidden-file-input').onchange = (e) => {
+            const reader = new FileReader();
+            reader.onload = (ev) => rtdb.ref('relics/' + selectedRelicId).update({ imgUrl: ev.target.result });
+            reader.readAsDataURL(e.target.files[0]);
+        };
     </script>
 </body>
 </html>
