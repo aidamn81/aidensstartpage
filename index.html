@@ -22,7 +22,6 @@
 
         #top-controls { width: 100%; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1a1a1a; background: #000; box-sizing: border-box; }
         
-        /* Dense Grid Preserved */
         #archive-grid { 
             display: grid; padding: 10px; 
             grid-template-columns: repeat(auto-fill, 62px); 
@@ -30,7 +29,6 @@
             justify-content: center; align-items: start; box-sizing: border-box;
         }
 
-        /* 6-Column Mobile Layout Preserved */
         @media only screen and (max-width: 600px) {
             #archive-grid { grid-template-columns: repeat(6, 1fr); gap: 8px 0px; padding: 10px 5px; }
         }
@@ -41,11 +39,9 @@
             transition: transform 0.15s ease, opacity 0.15s ease;
         }
         
-        /* Drag State Styles */
         .relic-wrapper.dragging { opacity: 0.2; transform: scale(0.85); filter: grayscale(1); }
         .relic-wrapper.drag-over { outline: 1px dashed var(--gold); background: rgba(140, 115, 64, 0.05); }
 
-        /* Icon Scales (20% bigger than previous miniature version) */
         .relic-frame { width: 50px; height: 68px; position: relative; display: flex; align-items: center; justify-content: center; pointer-events: none; }
         .relic-frame::before {
             content: ""; position: absolute; top: -6px; left: -6px; right: -6px; bottom: -6px;
@@ -68,14 +64,21 @@
             padding: 1px 0; line-height: 1;
         }
 
+        /* TITLES 30% BIGGER */
         .relic-name { 
-            margin-top: 1px; font-family: 'Cinzel'; font-size: 0.48rem; 
-            text-align: center; color: var(--gold); width: 100%; max-width: 60px;
-            line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            margin-top: 1px; 
+            font-family: 'Cinzel'; 
+            font-size: 0.63rem; /* Increased from 0.48rem (~30% boost) */
+            text-align: center; color: var(--gold); 
+            width: 100%; 
+            max-width: 64px; /* Slightly wider to accommodate larger text */
+            line-height: 1.1; 
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis;
             pointer-events: none;
         }
 
-        /* Context Menu & Admin UI */
         #context-menu, #move-menu { display: none; position: fixed; z-index: 2000; background: #0a0a0a; border: 1px solid var(--gold); padding: 5px; min-width: 120px; box-shadow: 0 5px 15px #000; }
         .menu-item { padding: 12px 20px; font-family: 'Cinzel'; font-size: 0.7rem; color: var(--gold); cursor: pointer; border-bottom: 1px solid #1a1a1a; }
         .menu-item:hover { background: var(--crimson); color: white; }
@@ -115,6 +118,7 @@
     <input type="file" id="hidden-file-input" style="display:none" accept="image/*">
 
     <script>
+        // ... Firebase logic preserved exactly as requested ...
         const firebaseConfig = {
             apiKey: "AIzaSyAuNbY1Xv_ZF3kJah20qqPBz-IiiMAR9gE",
             authDomain: "aidenstartpage.firebaseapp.com",
@@ -154,9 +158,7 @@
             const type = document.getElementById('r-type').value;
             const file = document.getElementById('r-file').files[0];
             if(!name) return;
-
             const existingCount = Object.values(allRelics).filter(r => r.parent === currentFolder).length;
-
             const pushData = (img) => {
                 rtdb.ref('relics').push({
                     name, url: type === 'folder' ? '' : url, type,
@@ -174,23 +176,20 @@
         };
 
         function loadRelics() {
-            rtdb.ref('relics').off(); // Clear existing listeners
+            rtdb.ref('relics').off();
             rtdb.ref('relics').on('value', snap => {
                 allRelics = snap.val() || {};
                 const grid = document.getElementById('archive-grid');
                 grid.innerHTML = '';
-                
                 const sortedIds = Object.keys(allRelics)
                     .filter(id => allRelics[id].parent === currentFolder)
                     .sort((a, b) => (allRelics[a].sortOrder || 0) - (allRelics[b].sortOrder || 0));
-
                 sortedIds.forEach(id => {
                     const d = allRelics[id];
                     const wrap = document.createElement('div');
                     wrap.className = 'relic-wrapper';
                     wrap.draggable = isEditMode;
                     wrap.dataset.id = id;
-                    
                     if (d.type === 'folder') {
                         const children = Object.values(allRelics).filter(item => item.parent === id);
                         let namesHtml = children.map(c => `<div class="folder-text-entry">${c.name}</div>`).join('');
@@ -198,23 +197,11 @@
                     } else {
                         wrap.innerHTML = `<div class="relic-frame"><img src="${d.imgUrl || ''}"></div><span class="relic-name">${d.name}</span>`;
                     }
-
-                    // Drag Logic
-                    wrap.ondragstart = (e) => { 
-                        draggedId = id; 
-                        wrap.classList.add('dragging');
-                        e.dataTransfer.setData('text/plain', id);
-                    };
+                    wrap.ondragstart = (e) => { draggedId = id; wrap.classList.add('dragging'); e.dataTransfer.setData('text/plain', id); };
                     wrap.ondragend = () => wrap.classList.remove('dragging');
                     wrap.ondragover = (e) => { e.preventDefault(); wrap.classList.add('drag-over'); };
                     wrap.ondragleave = () => wrap.classList.remove('drag-over');
-                    wrap.ondrop = (e) => {
-                        e.preventDefault();
-                        wrap.classList.remove('drag-over');
-                        if (draggedId && draggedId !== id) swapRelics(draggedId, id);
-                    };
-
-                    // Long Press / Click Logic
+                    wrap.ondrop = (e) => { e.preventDefault(); wrap.classList.remove('drag-over'); if (draggedId && draggedId !== id) swapRelics(draggedId, id); };
                     wrap.onmousedown = (e) => startPress(e, id);
                     wrap.ontouchstart = (e) => startPress(e, id);
                     wrap.onmouseup = () => { 
@@ -232,7 +219,6 @@
         function swapRelics(id1, id2) {
             const order1 = allRelics[id1].sortOrder || 0;
             const order2 = allRelics[id2].sortOrder || 0;
-            // Immediate Database Update
             rtdb.ref(`relics/${id1}`).update({ sortOrder: order2 });
             rtdb.ref(`relics/${id2}`).update({ sortOrder: order1 });
         }
