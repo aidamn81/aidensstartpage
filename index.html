@@ -39,26 +39,34 @@
         }
         .relic-frame img { width: 58px; height: 80px; object-fit: cover; clip-path: ellipse(50% 50% at 50% 50%); filter: sepia(0.3) contrast(1.1); }
 
-        /* THE FOLDER: TINY RECTANGLE LOGOS */
+        /* THE FOLDER: TEXT LIST ONLY */
         .folder-icon { 
-            width: 65px; height: 88px; background: rgba(15, 0, 0, 0.6); 
+            width: 65px; height: 88px; background: rgba(10, 10, 10, 0.95); 
             border: 2px solid var(--crimson); outline: 1px solid var(--gold); outline-offset: -5px;
-            display: flex; flex-wrap: wrap; align-content: flex-start;
-            padding: 10px 8px; gap: 3px; overflow: hidden;
+            display: flex; flex-direction: column;
+            padding: 12px 6px; gap: 1px; overflow-y: auto;
             box-shadow: inset 0 0 15px #000;
         }
+        /* Custom scrollbar for folders */
+        .folder-icon::-webkit-scrollbar { width: 2px; }
+        .folder-icon::-webkit-scrollbar-thumb { background: var(--crimson); }
 
-        .mini-box {
-            width: 15px; height: 15px;
-            background: #000;
-            border: 1px solid rgba(140, 115, 64, 0.4);
-            object-fit: contain;
-            border-radius: 2px;
+        .folder-text-entry {
+            font-family: 'Cinzel', serif;
+            font-size: 0.35rem; /* Tiny but legible Cinzel */
+            color: var(--gold);
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-transform: uppercase;
+            border-bottom: 1px solid rgba(140, 115, 64, 0.1);
+            padding: 1px 0;
         }
 
         .relic-name { margin-top: 12px; font-family: 'Cinzel'; font-size: 0.55rem; text-align: center; color: var(--gold); max-width: 80px; }
 
-        /* Admin UI & Context Menu Preserved */
+        /* Admin UI & Context Menu */
         #context-menu { display: none; position: fixed; z-index: 2000; background: #0a0a0a; border: 1px solid var(--gold); padding: 5px; }
         .menu-item { padding: 12px 25px; font-family: 'Cinzel'; font-size: 0.7rem; color: var(--gold); cursor: pointer; border-bottom: 1px solid #1a1a1a; }
         .menu-item:hover { background: var(--crimson); color: white; }
@@ -164,14 +172,13 @@
                     wrap.className = 'relic-wrapper';
                     
                     if (d.type === 'folder') {
-                        // Gather icons of all relics inside this folder
                         const children = Object.values(allData).filter(item => item.parent === id);
-                        let iconsHtml = children.map(c => 
-                            `<img class="mini-box" src="${c.imgUrl || ''}">`
+                        let namesHtml = children.map(c => 
+                            `<div class="folder-text-entry">${c.name}</div>`
                         ).join('');
 
                         wrap.innerHTML = `
-                            <div class="relic-frame folder-icon">${iconsHtml}</div>
+                            <div class="relic-frame folder-icon">${namesHtml}</div>
                             <span class="relic-name">${d.name}</span>
                         `;
                     } else {
