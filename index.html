@@ -18,8 +18,15 @@
                               url('https://www.transparenttextures.com/patterns/dark-brick-wall.png');
             color: var(--text); font-family: 'Playfair Display', serif;
             margin: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center;
-            padding-top: calc(44px + env(safe-area-inset-top, 20px));
-            overflow-x: hidden; touch-action: none; /* Required for custom dragging */
+            overflow-x: hidden; touch-action: none; 
+        }
+
+        /* FIX: THE SAFARI TOP BAR SHIELD */
+        #top-shield {
+            width: 100%;
+            height: calc(80px + env(safe-area-inset-top, 0px));
+            flex-shrink: 0;
+            display: block;
         }
 
         #top-controls { 
@@ -30,45 +37,22 @@
         }
         
         #archive-grid { 
-            display: grid; padding: 20px 10px; 
+            display: grid; padding: 10px; 
             grid-template-columns: repeat(auto-fill, 62px); 
             gap: 12px 2px; width: 100%; max-width: 1200px;
             justify-content: center; align-items: start; box-sizing: border-box;
-            position: relative; margin-top: 20px;
+            position: relative;
         }
 
         @media only screen and (max-width: 600px) {
-            #archive-grid { grid-template-columns: repeat(6, 1fr); gap: 12px 0px; padding: 20px 5px; }
+            #archive-grid { grid-template-columns: repeat(6, 1fr); gap: 12px 0px; padding: 10px 5px; }
         }
 
-        /* Wiggle Animation */
-        @keyframes wiggle {
-            0% { transform: rotate(-1deg); }
-            50% { transform: rotate(1.5deg); }
-            100% { transform: rotate(-1deg); }
-        }
-
-        .relic-wrapper { 
-            display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            position: relative; cursor: pointer; user-select: none;
-            transition: transform 0.2s ease, opacity 0.2s ease;
-            touch-action: none;
-        }
-
-        /* Wiggle state only in Edit Mode */
-        .wiggle-mode .relic-wrapper:not(.is-dragging) {
-            animation: wiggle 0.3s infinite ease-in-out;
-        }
-
-        .relic-wrapper.is-dragging { 
-            opacity: 0.7; 
-            transform: scale(1.2) !important; 
-            z-index: 5000; 
-            position: fixed; 
-            pointer-events: none;
-            animation: none !important;
-        }
-
+        /* Wiggle & Drag Preserved */
+        @keyframes wiggle { 0% { transform: rotate(-1deg); } 50% { transform: rotate(1.5deg); } 100% { transform: rotate(-1deg); } }
+        .relic-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; cursor: pointer; user-select: none; transition: transform 0.2s ease, opacity 0.2s ease; touch-action: none; }
+        .wiggle-mode .relic-wrapper:not(.is-dragging) { animation: wiggle 0.3s infinite ease-in-out; }
+        .relic-wrapper.is-dragging { opacity: 0.7; transform: scale(1.2) !important; z-index: 5000; position: fixed; pointer-events: none; animation: none !important; }
         .relic-wrapper.placeholder { opacity: 0.1; animation: none !important; }
 
         .relic-frame { width: 50px; height: 68px; position: relative; display: flex; align-items: center; justify-content: center; pointer-events: none; }
@@ -78,33 +62,15 @@
             background-size: contain; background-repeat: no-repeat; z-index: 5;
         }
         .relic-frame img { width: 42px; height: 58px; object-fit: cover; clip-path: ellipse(50% 50% at 50% 50%); filter: sepia(0.3) contrast(1.1); }
-
-        .folder-icon { 
-            width: 47px; height: 64px; background: rgba(10, 10, 10, 0.95); 
-            border: 1.8px solid var(--crimson); outline: 1px solid var(--gold); outline-offset: -4px;
-            display: flex; flex-direction: column; padding: 8px 4px; gap: 1px; overflow-y: auto;
-        }
-
-        .folder-text-entry {
-            font-family: 'Cinzel', serif; font-size: 0.38rem; color: var(--gold);
-            text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-            text-transform: uppercase; border-bottom: 0.5px solid rgba(140, 115, 64, 0.15);
-            padding: 1px 0; line-height: 1;
-        }
-
-        .relic-name { 
-            margin-top: 1px; font-family: 'Cinzel'; font-size: 0.63rem; 
-            text-align: center; color: var(--gold); width: 100%; max-width: 64px;
-            line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-            pointer-events: none;
-        }
+        .folder-icon { width: 47px; height: 64px; background: rgba(10, 10, 10, 0.95); border: 1.8px solid var(--crimson); outline: 1px solid var(--gold); outline-offset: -4px; display: flex; flex-direction: column; padding: 8px 4px; gap: 1px; overflow-y: auto; }
+        .folder-text-entry { font-family: 'Cinzel', serif; font-size: 0.38rem; color: var(--gold); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: uppercase; border-bottom: 0.5px solid rgba(140, 115, 64, 0.15); padding: 1px 0; line-height: 1; }
+        .relic-name { margin-top: 1px; font-family: 'Cinzel'; font-size: 0.63rem; text-align: center; color: var(--gold); width: 100%; max-width: 64px; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
 
         #context-menu, #move-menu { display: none; position: fixed; z-index: 6000; background: #0a0a0a; border: 1px solid var(--gold); padding: 5px; min-width: 140px; }
         .menu-item { padding: 12px 20px; font-family: 'Cinzel'; font-size: 0.75rem; color: var(--gold); cursor: pointer; border-bottom: 1px solid #1a1a1a; }
         .menu-item:hover { background: var(--crimson); color: white; }
-        
         #admin-desk { display: none; padding: 10px; gap: 4px; flex-direction: column; align-items: center; border: 1px solid var(--crimson); width: 250px; margin: 10px auto; background: #080808; }
-        .toggle-btn { background: transparent; border: 1px solid var(--gold); color: var(--gold); width: auto; cursor: pointer; padding: 8px 15px; font-family: 'Cinzel'; font-size: 0.7rem; }
+        .toggle-btn { background: transparent; border: 1px solid var(--gold); color: var(--gold); cursor: pointer; padding: 8px 15px; font-family: 'Cinzel'; font-size: 0.7rem; }
         input, select { background: #000; border: 1px solid #333; color: #fff; padding: 8px; width: 100%; box-sizing: border-box; margin-bottom: 5px;}
     </style>
 </head>
@@ -117,6 +83,8 @@
         </div>
         <button id="edit-toggle" class="toggle-btn">Edit Mode</button>
     </div>
+
+    <div id="top-shield"></div>
 
     <section id="admin-desk">
         <input type="text" id="r-name" placeholder="Name">
@@ -198,24 +166,17 @@
                         wrap.innerHTML = `<div class="relic-frame"><img src="${d.imgUrl || ''}"></div><span class="relic-name">${d.name}</span>`;
                     }
 
-                    // POINTER LOGIC FOR DRAG & LONG PRESS
                     wrap.onpointerdown = (e) => {
                         if(!isEditMode) return;
                         window.longPressed = false;
                         startX = e.clientX; startY = e.clientY;
-                        
-                        window.pTimer = setTimeout(() => { 
-                            window.longPressed = true;
-                            showContextMenu(e, id);
-                        }, 700);
-
+                        window.pTimer = setTimeout(() => { window.longPressed = true; showContextMenu(e, id); }, 700);
                         dragItem = wrap;
                         wrap.setPointerCapture(e.pointerId);
                     };
 
                     wrap.onpointermove = (e) => {
                         if (!dragItem || window.longPressed) return;
-                        
                         const dist = Math.hypot(e.clientX - startX, e.clientY - startY);
                         if (dist > 15) {
                             clearTimeout(window.pTimer);
@@ -227,11 +188,7 @@
                             }
                             ghostItem.style.left = `${e.clientX - 31}px`;
                             ghostItem.style.top = `${e.clientY - 40}px`;
-
-                            // Reorder logic on hover
-                            const target = document.elementsFromPoint(e.clientX, e.clientY)
-                                .find(el => el.classList.contains('relic-wrapper') && el !== dragItem && el !== ghostItem);
-                            
+                            const target = document.elementsFromPoint(e.clientX, e.clientY).find(el => el.classList.contains('relic-wrapper') && el !== dragItem && el !== ghostItem);
                             if (target) {
                                 const targetId = target.dataset.id;
                                 const sourceId = dragItem.dataset.id;
@@ -242,17 +199,13 @@
 
                     wrap.onpointerup = (e) => {
                         clearTimeout(window.pTimer);
-                        if (ghostItem) {
-                            ghostItem.remove();
-                            ghostItem = null;
-                            dragItem.classList.remove('placeholder');
-                        } else if (!window.longPressed) {
+                        if (ghostItem) { ghostItem.remove(); ghostItem = null; dragItem.classList.remove('placeholder'); }
+                        else if (!window.longPressed) {
                             if (d.type === 'folder') enterFolder(id, d.name);
                             else if (d.url) window.open(d.url, '_blank');
                         }
                         dragItem = null;
                     };
-
                     grid.appendChild(wrap);
                 });
             });
@@ -262,10 +215,8 @@
             const siblings = Object.keys(allRelics).filter(id => allRelics[id].parent === currentFolder).sort((a, b) => (allRelics[a].sortOrder || 0) - (allRelics[b].sortOrder || 0));
             const fromIndex = siblings.indexOf(sourceId);
             const toIndex = siblings.indexOf(targetId);
-            
             siblings.splice(fromIndex, 1);
             siblings.splice(toIndex, 0, sourceId);
-            
             const updates = {};
             siblings.forEach((id, i) => { updates[`relics/${id}/sortOrder`] = i; });
             await rtdb.ref().update(updates);
@@ -275,8 +226,8 @@
             selectedRelicId = id;
             const menu = document.getElementById('context-menu');
             menu.style.display = 'block';
-            menu.style.left = e.clientX + 'px';
-            menu.style.top = e.clientY + 'px';
+            menu.style.left = (e.clientX || e.pageX) + 'px';
+            menu.style.top = (e.clientY || e.pageY) + 'px';
         }
 
         window.menuAction = (type) => {
@@ -291,7 +242,6 @@
 
         function enterFolder(id, name) { currentFolder = id; document.getElementById('status-text').innerText = name; document.getElementById('back-btn').style.display = 'block'; loadRelics(); }
         function goBack() { currentFolder = 'root'; document.getElementById('status-text').innerText = "Archive"; document.getElementById('back-btn').style.display = 'none'; loadRelics(); }
-        
         window.onclick = (e) => { if(!e.target.closest('.menu-item')) { document.getElementById('context-menu').style.display = 'none'; document.getElementById('move-menu').style.display = 'none'; } };
 
         document.getElementById('r-save').onclick = async () => {
@@ -320,7 +270,6 @@
             moveMenu.style.display = 'block'; moveMenu.style.left = contextMenu.style.left; moveMenu.style.top = contextMenu.style.top; contextMenu.style.display = 'none';
         }
         function executeMove(targetId) { rtdb.ref('relics/' + selectedRelicId).update({ parent: targetId }); document.getElementById('move-menu').style.display = 'none'; }
-        
         document.getElementById('hidden-file-input').onchange = (e) => {
             const reader = new FileReader();
             reader.onload = (ev) => rtdb.ref('relics/' + selectedRelicId).update({ imgUrl: ev.target.result });
