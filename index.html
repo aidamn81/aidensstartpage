@@ -34,7 +34,7 @@
 
         .relic-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; cursor: pointer; -webkit-touch-callout: none; user-select: none; }
         
-        /* OVAL RELIC FRAME */
+        /* OVAL RELIC FRAME (Bookmarks) */
         .relic-frame { width: 70px; height: 95px; position: relative; display: flex; align-items: center; justify-content: center; }
         .relic-frame::before {
             content: ""; position: absolute; top: -8px; left: -8px; right: -8px; bottom: -8px;
@@ -43,42 +43,36 @@
         }
         .relic-frame img { width: 58px; height: 80px; object-fit: cover; clip-path: ellipse(50% 50% at 50% 50%); filter: sepia(0.3) contrast(1.1); }
 
-        /* THE FOLDER: A MINIATURE RECTANGLE DISPLAY CASE */
+        /* THE FOLDER: STRUCTURED LOGO DISPLAY */
         .relic-frame.folder-icon { 
-            width: 65px; height: 88px; background: rgba(15, 0, 0, 0.6); 
+            width: 65px; height: 88px; background: rgba(20, 0, 0, 0.4); 
             border: 2px solid var(--crimson); outline: 1px solid var(--gold); outline-offset: -5px;
-            backdrop-filter: blur(1px); overflow: hidden;
+            backdrop-filter: blur(2px); overflow: hidden;
             display: grid; 
-            /* Auto-fill miniature rectangles into a dense grid */
-            grid-template-columns: repeat(auto-fill, minmax(14px, 1fr));
-            grid-auto-rows: 20px;
-            padding: 8px 6px; gap: 2px;
-            box-shadow: inset 0 0 12px #000;
+            /* 3 items per row for a clean gallery look */
+            grid-template-columns: repeat(3, 1fr); 
+            grid-auto-rows: 18px;
+            padding: 10px 8px; gap: 4px;
+            box-shadow: inset 0 0 10px #000;
             align-content: start;
         }
         .relic-frame.folder-icon::before { display: none; }
 
-        /* Glass Reflection Overlay */
-        .relic-frame.folder-icon::after {
-            content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 50%);
-            pointer-events: none; z-index: 2;
-        }
-
-        .mini-relic-rect {
-            width: 100%; height: 100%;
-            background-color: #0a0a0a;
-            border: 0.3px solid rgba(140, 115, 64, 0.3);
-            object-fit: cover; 
-            opacity: 0.7; 
-            filter: grayscale(80%) sepia(0.2);
-            border-radius: 1px;
-            z-index: 1;
+        /* Miniature Logo Boxes */
+        .mini-relic-box {
+            width: 100%; height: 18px;
+            background-color: #000;
+            border: 0.5px solid rgba(140, 115, 64, 0.5);
+            object-fit: contain; /* Keeps logos from stretching */
+            opacity: 0.8; 
+            padding: 1px;
+            box-sizing: border-box;
+            border-radius: 2px;
         }
 
         .relic-name { margin-top: 12px; font-family: 'Cinzel'; font-size: 0.55rem; text-align: center; color: var(--gold); max-width: 80px; }
 
-        /* Admin UI Preserved */
+        /* Admin/Context Logic (Preserved) */
         #context-menu { display: none; position: fixed; z-index: 2000; background: #0a0a0a; border: 1px solid var(--gold); padding: 5px; }
         .menu-item { padding: 12px 25px; font-family: 'Cinzel'; font-size: 0.7rem; color: var(--gold); cursor: pointer; border-bottom: 1px solid #1a1a1a; }
         .menu-item:hover { background: var(--crimson); color: white; }
@@ -101,7 +95,7 @@
 
     <section id="admin-desk">
         <input type="text" id="r-name" placeholder="Name">
-        <input type="text" id="r-url" placeholder="Link (Optional for Edit)">
+        <input type="text" id="r-url" placeholder="URL">
         <select id="r-type"><option value="link">Relic</option><option value="folder">Folder</option></select>
         <input type="file" id="r-file" accept="image/*">
         <button id="r-save">Commemorate</button>
@@ -110,15 +104,14 @@
     <main id="archive-grid"></main>
 
     <div id="context-menu">
-        <div class="menu-item" onclick="menuAction('edit')">Rename / Edit URL</div>
-        <div class="menu-item" onclick="document.getElementById('hidden-file-input').click()">Update Portrait</div>
-        <div class="menu-item" onclick="menuAction('move')">Move to Folder</div>
-        <div class="menu-item" onclick="menuAction('delete')" style="color:var(--crimson);">Purge Item</div>
+        <div class="menu-item" onclick="menuAction('edit')">Edit</div>
+        <div class="menu-item" onclick="document.getElementById('hidden-file-input').click()">Portrait</div>
+        <div class="menu-item" onclick="menuAction('move')">Move</div>
+        <div class="menu-item" onclick="menuAction('delete')" style="color:var(--crimson);">Purge</div>
     </div>
     <input type="file" id="hidden-file-input" style="display:none" accept="image/*">
 
     <script>
-        // CONFIG PRESERVED
         const firebaseConfig = {
             apiKey: "AIzaSyAuNbY1Xv_ZF3kJah20qqPBz-IiiMAR9gE",
             authDomain: "aidenstartpage.firebaseapp.com",
@@ -187,28 +180,18 @@
                     
                     if (isFolder) {
                         const children = Object.values(allData).filter(item => item.parent === id);
-                        // Render ALL children as miniature rectangles
-                        let minisHtml = children.map(c => 
-                            `<img class="mini-relic-rect" src="${c.imgUrl || ''}">`
+                        // Clean grid of boxes
+                        let minisHtml = children.slice(0, 12).map(c => 
+                            `<img class="mini-relic-box" src="${c.imgUrl || ''}">`
                         ).join('');
                         
                         if (children.length === 0) {
-                            minisHtml = `<div style="grid-column: 1 / -1; font-size:1.2rem; opacity:0.1; margin-top:10px; text-align:center;">🕯️</div>`;
+                            minisHtml = `<div style="grid-column: span 3; opacity:0.1; padding-top:15px; text-align:center;">🕯️</div>`;
                         }
 
-                        wrap.innerHTML = `
-                            <div class="relic-frame folder-icon">
-                                ${minisHtml}
-                            </div>
-                            <span class="relic-name">${d.name}</span>
-                        `;
+                        wrap.innerHTML = `<div class="relic-frame folder-icon">${minisHtml}</div><span class="relic-name">${d.name}</span>`;
                     } else {
-                        wrap.innerHTML = `
-                            <div class="relic-frame">
-                                <img src="${d.imgUrl || ''}">
-                            </div>
-                            <span class="relic-name">${d.name}</span>
-                        `;
+                        wrap.innerHTML = `<div class="relic-frame"><img src="${d.imgUrl || ''}"></div><span class="relic-name">${d.name}</span>`;
                     }
 
                     wrap.onmousedown = (e) => startPress(e, id);
@@ -225,7 +208,6 @@
             });
         }
 
-        // Navigation and Context Menu logic preserved from previous versions...
         function enterFolder(id, name) {
             currentFolder = id;
             document.getElementById('status-text').innerText = name;
@@ -247,30 +229,29 @@
                 window.longPressed = true; 
                 const menu = document.getElementById('context-menu');
                 menu.style.display = 'block';
-                menu.style.left = (e.pageX || (e.touches ? e.touches[0].pageX : 0)) + 'px';
-                menu.style.top = (e.pageY || (e.touches ? e.touches[0].pageY : 0)) + 'px';
+                const pageX = e.pageX || (e.touches ? e.touches[0].pageX : 0);
+                const pageY = e.pageY || (e.touches ? e.touches[0].pageY : 0);
+                menu.style.left = pageX + 'px';
+                menu.style.top = pageY + 'px';
             }, 700);
         }
 
         window.onclick = () => document.getElementById('context-menu').style.display = 'none';
 
         window.menuAction = (type) => {
-            if (type === 'delete' && confirm("Purge this item?")) rtdb.ref('relics/' + selectedRelicId).remove();
+            if (type === 'delete' && confirm("Purge?")) rtdb.ref('relics/' + selectedRelicId).remove();
             if (type === 'edit') {
-                const newName = prompt("New Name:");
-                const newUrl = prompt("New URL (Optional):");
-                let updates = {};
-                if (newName) updates.name = newName;
-                if (newUrl) updates.url = newUrl;
-                if (Object.keys(updates).length > 0) rtdb.ref('relics/' + selectedRelicId).update(updates);
+                const newName = prompt("Name:");
+                const newUrl = prompt("URL:");
+                if (newName || newUrl) rtdb.ref('relics/' + selectedRelicId).update({ name: newName || undefined, url: newUrl || undefined });
             }
             if (type === 'move') {
-                const targetName = prompt("Target Folder Name (or 'root'):");
+                const target = prompt("Folder Name or 'root':");
                 rtdb.ref('relics').once('value', snap => {
                     const items = snap.val();
-                    const folderId = Object.keys(items).find(key => items[key].name === targetName && items[key].type === 'folder');
-                    if(folderId) rtdb.ref('relics/' + selectedRelicId).update({ parent: folderId });
-                    else if(targetName.toLowerCase() === 'root') rtdb.ref('relics/' + selectedRelicId).update({ parent: 'root' });
+                    const fid = Object.keys(items).find(k => items[k].name === target && items[k].type === 'folder');
+                    if(fid) rtdb.ref('relics/' + selectedRelicId).update({ parent: fid });
+                    else if(target === 'root') rtdb.ref('relics/' + selectedRelicId).update({ parent: 'root' });
                 });
             }
         };
