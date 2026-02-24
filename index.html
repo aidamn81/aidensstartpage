@@ -22,16 +22,25 @@
 
         #top-controls { width: 100%; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1a1a1a; background: #000; box-sizing: border-box; }
         
+        /* DEFAULT GRID (iPad / Desktop) */
         #archive-grid { 
             display: grid; padding: 10px; 
-            /* Fixed width columns instead of 1fr to force them closer together */
             grid-template-columns: repeat(auto-fill, 62px); 
-            gap: 6px 2px; /* Slashed gaps further */
+            gap: 6px 2px; 
             width: 100%; 
             max-width: 1200px;
-            justify-content: center; /* Keeps the tight cluster centered */
+            justify-content: center; 
             align-items: start; 
             box-sizing: border-box;
+        }
+
+        /* IPHONE SPECIFIC (6 in one row) */
+        @media only screen and (max-width: 600px) {
+            #archive-grid {
+                grid-template-columns: repeat(6, 1fr); /* Forces exactly 6 columns */
+                gap: 8px 0px; /* Tight horizontal, slight vertical breathing room */
+                padding: 10px 5px;
+            }
         }
 
         .relic-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; cursor: pointer; -webkit-touch-callout: none; user-select: none; }
@@ -62,20 +71,21 @@
         }
 
         .relic-name { 
-            margin-top: 1px; /* Minimum possible spacing */
+            margin-top: 1px; 
             font-family: 'Cinzel'; font-size: 0.48rem; 
             text-align: center; color: var(--gold); 
-            width: 60px; /* Constrain width to keep items tight */
+            width: 100%; /* Changed to 100% for 1fr grid stability */
+            max-width: 60px;
             line-height: 1;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
+        /* Controls / Menus Preserved */
         #context-menu, #move-menu { display: none; position: fixed; z-index: 2000; background: #0a0a0a; border: 1px solid var(--gold); padding: 5px; min-width: 120px; }
         .menu-item { padding: 12px 20px; font-family: 'Cinzel'; font-size: 0.7rem; color: var(--gold); cursor: pointer; border-bottom: 1px solid #1a1a1a; }
         .menu-item:hover { background: var(--crimson); color: white; }
-        
         button { background: var(--crimson); color: white; border: none; padding: 8px 15px; cursor: pointer; font-family: 'Cinzel'; font-size: 0.7rem; width: 100%; }
         input, select { background: #000; border: 1px solid #333; color: #fff; padding: 8px; width: 100%; box-sizing: border-box; }
         .toggle-btn { background: transparent; border: 1px solid var(--gold); color: var(--gold); width: auto; }
@@ -115,7 +125,6 @@
     <input type="file" id="hidden-file-input" style="display:none" accept="image/*">
 
     <script>
-        // ... Logic and Config Preserved Exactly ...
         const firebaseConfig = {
             apiKey: "AIzaSyAuNbY1Xv_ZF3kJah20qqPBz-IiiMAR9gE",
             authDomain: "aidenstartpage.firebaseapp.com",
