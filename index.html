@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>The Gothic Archive</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Playfair+Display&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -18,13 +18,25 @@
                               url('https://www.transparenttextures.com/patterns/dark-brick-wall.png');
             color: var(--text); font-family: 'Playfair Display', serif;
             margin: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center;
-            overflow-x: hidden; touch-action: none; /* Prevents pull-to-refresh during drag */
+            overflow-x: hidden; touch-action: none;
+            /* FIX: Respects Safari UI and Notch */
+            padding-top: env(safe-area-inset-top, 20px); 
         }
 
-        #top-controls { width: 100%; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1a1a1a; background: #000; box-sizing: border-box; }
+        #top-controls { 
+            width: 100%; 
+            padding: 15px 20px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-bottom: 1px solid #1a1a1a; 
+            background: #000; 
+            box-sizing: border-box;
+            position: sticky; top: 0; z-index: 3000;
+        }
         
         #archive-grid { 
-            display: grid; padding: 10px; 
+            display: grid; padding: 20px 10px; 
             grid-template-columns: repeat(auto-fill, 62px); 
             gap: 12px 2px; width: 100%; max-width: 1200px;
             justify-content: center; align-items: start; box-sizing: border-box;
@@ -32,25 +44,17 @@
         }
 
         @media only screen and (max-width: 600px) {
-            #archive-grid { grid-template-columns: repeat(6, 1fr); gap: 12px 0px; padding: 10px 5px; }
+            #archive-grid { grid-template-columns: repeat(6, 1fr); gap: 12px 0px; padding: 20px 5px; }
         }
 
+        /* REORDERING VISUALS PRESERVED */
         .relic-wrapper { 
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
             position: relative; cursor: pointer; user-select: none;
-            transition: transform 0.2s ease;
-            touch-action: none;
+            transition: transform 0.2s ease; touch-action: none;
         }
         
-        /* Active Dragging state */
-        .relic-wrapper.is-dragging { 
-            opacity: 0.5; 
-            transform: scale(1.1); 
-            z-index: 1000; 
-            pointer-events: none; 
-            position: absolute; 
-        }
-
+        .relic-wrapper.is-dragging { opacity: 0.5; transform: scale(1.1); z-index: 1000; pointer-events: none; position: absolute; }
         .relic-wrapper.placeholder { opacity: 0.1; transform: scale(0.8); }
         .relic-wrapper.shift-right { transform: translateX(15px); border-left: 2px solid var(--gold); }
 
@@ -75,6 +79,7 @@
             padding: 1px 0; line-height: 1;
         }
 
+        /* 30% BIGGER NAMES PRESERVED */
         .relic-name { 
             margin-top: 1px; font-family: 'Cinzel'; font-size: 0.63rem; 
             text-align: center; color: var(--gold); width: 100%; max-width: 64px;
@@ -82,7 +87,7 @@
             pointer-events: none;
         }
 
-        #context-menu, #move-menu { display: none; position: fixed; z-index: 2000; background: #0a0a0a; border: 1px solid var(--gold); padding: 5px; min-width: 120px; }
+        #context-menu, #move-menu { display: none; position: fixed; z-index: 4000; background: #0a0a0a; border: 1px solid var(--gold); padding: 5px; min-width: 120px; }
         .menu-item { padding: 12px 20px; font-family: 'Cinzel'; font-size: 0.7rem; color: var(--gold); cursor: pointer; border-bottom: 1px solid #1a1a1a; }
         .menu-item:hover { background: var(--crimson); color: white; }
         
@@ -96,7 +101,7 @@
     <div id="top-controls">
         <div style="display:flex; align-items:center;">
             <button id="back-btn" class="toggle-btn" style="display:none; margin-right:15px;" onclick="goBack()">← Back</button>
-            <span id="status-text" style="font-family:'Cinzel'; font-size:0.7rem; color:var(--gold);">Archive</span>
+            <span id="status-text" style="font-family:'Cinzel'; font-size:0.75rem; color:var(--gold);">Archive</span>
         </div>
         <button id="edit-toggle" class="toggle-btn">Edit Mode</button>
     </div>
@@ -122,7 +127,6 @@
     <input type="file" id="hidden-file-input" style="display:none" accept="image/*">
 
     <script>
-        // FIREBASE CONFIG
         const firebaseConfig = {
             apiKey: "AIzaSyAuNbY1Xv_ZF3kJah20qqPBz-IiiMAR9gE",
             authDomain: "aidenstartpage.firebaseapp.com",
@@ -180,30 +184,22 @@
                         wrap.innerHTML = `<div class="relic-frame"><img src="${d.imgUrl || ''}"></div><span class="relic-name">${d.name}</span>`;
                     }
 
-                    // Pointer Events for Cross-Platform Dragging
                     wrap.onpointerdown = (e) => {
                         if(!isEditMode) return;
-                        
-                        // Start long press timer for menu
                         window.longPressed = false;
                         window.pTimer = setTimeout(() => { 
                             window.longPressed = true;
                             showContextMenu(e, id);
                         }, 700);
-
-                        // Prep for Drag
-                        dragItem = wrap;
-                        startX = e.clientX;
-                        startY = e.clientY;
+                        dragItem = wrap; startX = e.clientX; startY = e.clientY;
                         wrap.setPointerCapture(e.pointerId);
                     };
 
                     wrap.onpointermove = (e) => {
                         if(!dragItem || window.longPressed) return;
-                        
                         const dist = Math.hypot(e.clientX - startX, e.clientY - startY);
                         if(dist > 10) {
-                            clearTimeout(window.pTimer); // Cancel menu if moving
+                            clearTimeout(window.pTimer);
                             if(!dragActive) startDragging(e);
                             updateDragging(e);
                         }
@@ -216,10 +212,8 @@
                             if(d.type === 'folder') enterFolder(id, d.name);
                             else if(d.url) window.open(d.url, '_blank');
                         }
-                        dragItem = null;
-                        dragActive = false;
+                        dragItem = null; dragActive = false;
                     };
-
                     grid.appendChild(wrap);
                 });
             });
@@ -237,41 +231,29 @@
         function updateDragging(e) {
             ghostItem.style.left = `${e.pageX - 31}px`;
             ghostItem.style.top = `${e.pageY - 40}px`;
-
-            // Detect Overlap for Shift Animation
-            const elements = document.elementsFromPoint(e.clientX, e.clientY);
-            const target = elements.find(el => el.classList.contains('relic-wrapper') && el !== dragItem && el !== ghostItem);
-            
+            const target = document.elementsFromPoint(e.clientX, e.clientY).find(el => el.classList.contains('relic-wrapper') && el !== dragItem && el !== ghostItem);
             document.querySelectorAll('.relic-wrapper').forEach(el => el.classList.remove('shift-right'));
             if(target) target.classList.add('shift-right');
         }
 
         async function endDragging(e) {
-            const elements = document.elementsFromPoint(e.clientX, e.clientY);
-            const target = elements.find(el => el.classList.contains('relic-wrapper') && el !== dragItem && el !== ghostItem);
-            
+            const target = document.elementsFromPoint(e.clientX, e.clientY).find(el => el.classList.contains('relic-wrapper') && el !== dragItem && el !== ghostItem);
             if(target) {
                 const sourceId = dragItem.dataset.id;
                 const targetId = target.dataset.id;
                 await reorderRelics(sourceId, targetId);
             }
-
-            ghostItem.remove();
-            dragItem.classList.remove('placeholder');
+            if(ghostItem) ghostItem.remove();
+            if(dragItem) dragItem.classList.remove('placeholder');
             document.querySelectorAll('.relic-wrapper').forEach(el => el.classList.remove('shift-right'));
         }
 
         async function reorderRelics(sourceId, targetId) {
-            const siblings = Object.keys(allRelics)
-                .filter(id => allRelics[id].parent === currentFolder)
-                .sort((a, b) => (allRelics[a].sortOrder || 0) - (allRelics[b].sortOrder || 0));
-
+            const siblings = Object.keys(allRelics).filter(id => allRelics[id].parent === currentFolder).sort((a, b) => (allRelics[a].sortOrder || 0) - (allRelics[b].sortOrder || 0));
             const fromIndex = siblings.indexOf(sourceId);
             const toIndex = siblings.indexOf(targetId);
-
             siblings.splice(fromIndex, 1);
             siblings.splice(toIndex, 0, sourceId);
-
             const updates = {};
             siblings.forEach((id, i) => { updates[`relics/${id}/sortOrder`] = i; });
             await rtdb.ref().update(updates);
@@ -285,10 +267,8 @@
             menu.style.top = e.pageY + 'px';
         }
 
-        // PRESERVED UTILITIES
         function enterFolder(id, name) { currentFolder = id; document.getElementById('status-text').innerText = name; document.getElementById('back-btn').style.display = 'block'; loadRelics(); }
         function goBack() { currentFolder = 'root'; document.getElementById('status-text').innerText = "Archive"; document.getElementById('back-btn').style.display = 'none'; loadRelics(); }
-        
         window.onclick = (e) => { if(!e.target.closest('.menu-item')) { document.getElementById('context-menu').style.display = 'none'; document.getElementById('move-menu').style.display = 'none'; } };
 
         window.menuAction = (type) => {
@@ -333,6 +313,12 @@
             contextMenu.style.display = 'none';
         }
         function executeMove(targetId) { rtdb.ref('relics/' + selectedRelicId).update({ parent: targetId }); document.getElementById('move-menu').style.display = 'none'; }
+
+        document.getElementById('hidden-file-input').onchange = (e) => {
+            const reader = new FileReader();
+            reader.onload = (ev) => rtdb.ref('relics/' + selectedRelicId).update({ imgUrl: ev.target.result });
+            reader.readAsDataURL(e.target.files[0]);
+        };
     </script>
 </body>
 </html>
