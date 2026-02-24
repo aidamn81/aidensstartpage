@@ -34,7 +34,7 @@
 
         .relic-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; cursor: pointer; -webkit-touch-callout: none; user-select: none; }
         
-        /* OVAL RELIC FRAME (Bookmarks) */
+        /* OVAL RELIC FRAME */
         .relic-frame { width: 70px; height: 95px; position: relative; display: flex; align-items: center; justify-content: center; }
         .relic-frame::before {
             content: ""; position: absolute; top: -8px; left: -8px; right: -8px; bottom: -8px;
@@ -43,36 +43,38 @@
         }
         .relic-frame img { width: 58px; height: 80px; object-fit: cover; clip-path: ellipse(50% 50% at 50% 50%); filter: sepia(0.3) contrast(1.1); }
 
-        /* THE FOLDER: STRUCTURED LOGO DISPLAY */
+        /* THE FOLDER: MOSAIC LOGO DISPLAY */
         .relic-frame.folder-icon { 
-            width: 65px; height: 88px; background: rgba(20, 0, 0, 0.4); 
+            width: 65px; height: 88px; background: rgba(15, 0, 0, 0.5); 
             border: 2px solid var(--crimson); outline: 1px solid var(--gold); outline-offset: -5px;
-            backdrop-filter: blur(2px); overflow: hidden;
+            backdrop-filter: blur(2px); overflow-y: auto;
             display: grid; 
-            /* 3 items per row for a clean gallery look */
-            grid-template-columns: repeat(3, 1fr); 
-            grid-auto-rows: 18px;
-            padding: 10px 8px; gap: 4px;
+            /* 5 tiny boxes per row */
+            grid-template-columns: repeat(5, 1fr); 
+            grid-auto-rows: 12px;
+            padding: 8px 6px; gap: 2px;
             box-shadow: inset 0 0 10px #000;
             align-content: start;
         }
+        /* Hide scrollbar for the mosaic but keep functionality */
+        .relic-frame.folder-icon::-webkit-scrollbar { display: none; }
         .relic-frame.folder-icon::before { display: none; }
 
-        /* Miniature Logo Boxes */
+        /* Ultra-Tiny Miniature Logo Boxes */
         .mini-relic-box {
-            width: 100%; height: 18px;
+            width: 100%; height: 12px;
             background-color: #000;
-            border: 0.5px solid rgba(140, 115, 64, 0.5);
-            object-fit: contain; /* Keeps logos from stretching */
-            opacity: 0.8; 
+            border: 0.2px solid rgba(140, 115, 64, 0.4);
+            object-fit: contain;
+            opacity: 0.85; 
             padding: 1px;
             box-sizing: border-box;
-            border-radius: 2px;
+            border-radius: 1px;
         }
 
         .relic-name { margin-top: 12px; font-family: 'Cinzel'; font-size: 0.55rem; text-align: center; color: var(--gold); max-width: 80px; }
 
-        /* Admin/Context Logic (Preserved) */
+        /* Logic Preserved */
         #context-menu { display: none; position: fixed; z-index: 2000; background: #0a0a0a; border: 1px solid var(--gold); padding: 5px; }
         .menu-item { padding: 12px 25px; font-family: 'Cinzel'; font-size: 0.7rem; color: var(--gold); cursor: pointer; border-bottom: 1px solid #1a1a1a; }
         .menu-item:hover { background: var(--crimson); color: white; }
@@ -180,13 +182,13 @@
                     
                     if (isFolder) {
                         const children = Object.values(allData).filter(item => item.parent === id);
-                        // Clean grid of boxes
-                        let minisHtml = children.slice(0, 12).map(c => 
+                        // Show up to 30 items in the mosaic
+                        let minisHtml = children.slice(0, 30).map(c => 
                             `<img class="mini-relic-box" src="${c.imgUrl || ''}">`
                         ).join('');
                         
                         if (children.length === 0) {
-                            minisHtml = `<div style="grid-column: span 3; opacity:0.1; padding-top:15px; text-align:center;">🕯️</div>`;
+                            minisHtml = `<div style="grid-column: span 5; opacity:0.1; padding-top:20px; text-align:center;">🕯️</div>`;
                         }
 
                         wrap.innerHTML = `<div class="relic-frame folder-icon">${minisHtml}</div><span class="relic-name">${d.name}</span>`;
@@ -239,7 +241,7 @@
         window.onclick = () => document.getElementById('context-menu').style.display = 'none';
 
         window.menuAction = (type) => {
-            if (type === 'delete' && confirm("Purge?")) rtdb.ref('relics/' + selectedRelicId).remove();
+            if (type === 'delete' && confirm("Purge with confirmation?")) rtdb.ref('relics/' + selectedRelicId).remove();
             if (type === 'edit') {
                 const newName = prompt("Name:");
                 const newUrl = prompt("URL:");
