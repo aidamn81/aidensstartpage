@@ -21,8 +21,8 @@
             overflow-x: hidden; touch-action: none; 
         }
 
-        /* Safari Overlap Fix */
-        #top-shield { width: 100%; height: calc(110px + env(safe-area-inset-top, 0px)); flex-shrink: 0; display: block; }
+        /* Safari Overlap Fix: Ensures the top row isn't hidden by the address bar */
+        #top-shield { width: 100%; height: calc(115px + env(safe-area-inset-top, 0px)); flex-shrink: 0; display: block; }
 
         #top-controls { 
             width: 100%; padding: 15px 20px; display: flex; justify-content: space-between; 
@@ -61,22 +61,24 @@
         .folder-text-entry { font-family: 'Cinzel', serif; font-size: 0.38rem; color: var(--gold); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: uppercase; border-bottom: 0.5px solid rgba(140, 115, 64, 0.15); padding: 1px 0; line-height: 1; }
         .relic-name { margin-top: 1px; font-family: 'Cinzel'; font-size: 0.63rem; text-align: center; color: var(--gold); width: 100%; max-width: 64px; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
 
-        /* Oracle Widget + Navigator */
+        /* Departure Oracle Widget Styles */
         #time-widget {
             background: rgba(5, 5, 5, 0.9); border: 1px solid var(--gold); padding: 20px;
-            width: 280px; font-family: 'Cinzel', serif; color: var(--gold);
+            width: 290px; font-family: 'Cinzel', serif; color: var(--gold);
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.8); margin: 60px auto 40px; text-align: center;
         }
         .widget-title { font-size: 0.9rem; margin-bottom: 15px; border-bottom: 1px solid var(--crimson); padding-bottom: 5px; letter-spacing: 2px; }
         .input-group { margin-bottom: 12px; text-align: left; }
         .input-group label { display: block; font-size: 0.6rem; text-transform: uppercase; margin-bottom: 4px; color: var(--text); }
-        .time-input { background: #000; border: 1px solid #333; color: #fff; padding: 8px; width: 100%; box-sizing: border-box; font-family: 'Playfair Display', serif; border-radius: 0; margin-bottom: 5px;}
-        #result-box { margin-top: 20px; padding: 10px; border: 1px dashed var(--crimson); background: rgba(122, 0, 0, 0.05); display: none; }
-        .departure-time { font-size: 1.5rem; color: #fff; display: block; margin-top: 5px; }
-        .calc-btn { background: var(--crimson); color: white; border: none; padding: 10px; width: 100%; cursor: pointer; font-family: 'Cinzel'; font-size: 0.75rem; margin-top: 5px; }
-        .portal-link { font-size: 0.55rem; color: var(--gold); text-decoration: underline; cursor: pointer; display: block; margin-top: 5px; }
+        .time-input { background: #000; border: 1px solid #333; color: #fff; padding: 10px; width: 100%; box-sizing: border-box; font-family: 'Playfair Display', serif; border-radius: 0; margin-bottom: 5px; font-size: 0.9rem; }
+        
+        #result-box { margin-top: 20px; padding: 15px; border: 1px dashed var(--crimson); background: rgba(122, 0, 0, 0.05); display: none; }
+        .departure-time { font-size: 1.6rem; color: #fff; display: block; margin-top: 5px; }
+        
+        .calc-btn { background: var(--crimson); color: white; border: none; padding: 12px; width: 100%; cursor: pointer; font-family: 'Cinzel'; font-size: 0.75rem; margin-top: 5px; text-transform: uppercase; letter-spacing: 1px; }
+        .portal-link { font-size: 0.6rem; color: var(--gold); text-decoration: underline; cursor: pointer; display: block; margin-top: 8px; text-align: right; font-style: italic; }
 
-        /* Context Menu Styles */
+        /* Admin UI */
         #context-menu, #move-menu { display: none; position: fixed; z-index: 6000; background: #0a0a0a; border: 1px solid var(--gold); padding: 5px; min-width: 140px; }
         .menu-item { padding: 12px 20px; font-family: 'Cinzel'; font-size: 0.75rem; color: var(--gold); cursor: pointer; border-bottom: 1px solid #1a1a1a; }
         .menu-item:hover { background: var(--crimson); color: white; }
@@ -117,23 +119,23 @@
         <div class="input-group">
             <label>Destination (Postcode/Address)</label>
             <input type="text" id="dest-address" class="time-input" placeholder="e.g. SW1A 1AA">
-            <span class="portal-link" onclick="openCitymapper()">Check Live Travel Time (Citymapper)</span>
+            <span class="portal-link" onclick="openCitymapper()">Consult Citymapper App →</span>
         </div>
 
         <div class="input-group">
-            <label>Current Travel Time (Min)</label>
+            <label>Journey Minutes (Live)</label>
             <input type="number" id="travel-time" class="time-input" value="45">
         </div>
         
-        <div style="font-size:0.55rem; color:var(--crimson); margin:10px 0;">+ 1.5 Hour Preparation Ritual</div>
+        <div style="font-size:0.55rem; color:var(--crimson); margin:10px 0; letter-spacing: 1px;">+ 1.5 HOUR PREPARATION RITUAL</div>
         
-        <button class="calc-btn" onclick="calculateDeparture()">Consult the Sands</button>
+        <button class="calc-btn" onclick="calculateDeparture()">Calculate Oracle</button>
         
         <div id="result-box">
-            <span style="font-size: 0.6rem; text-transform: uppercase;">Preparation Begins:</span>
-            <span id="prep-time" class="departure-time" style="font-size: 1rem; color: var(--gold);">--:--</span>
+            <span style="font-size: 0.6rem; text-transform: uppercase; color: var(--gold);">Wake / Prepare At:</span>
+            <span id="prep-time" class="departure-time" style="font-size: 1.1rem; color: var(--gold);">--:--</span>
             <hr style="border: 0; border-top: 1px solid #333; margin: 10px 0;">
-            <span style="font-size: 0.6rem; text-transform: uppercase;">Time to Depart:</span>
+            <span style="font-size: 0.6rem; text-transform: uppercase;">You Must Leave By:</span>
             <span id="leave-time" class="departure-time">--:--</span>
         </div>
     </div>
@@ -167,6 +169,40 @@
 
         window.addEventListener('load', loadRelics);
 
+        // --- ORACLE FUNCTIONS ---
+
+        function openCitymapper() {
+            const dest = document.getElementById('dest-address').value;
+            if (!dest) { alert("Input destination postcode or address first."); return; }
+            
+            // This URL structure is designed to force the Mobile App to take the Destination
+            const encodedDest = encodeURIComponent(dest);
+            const url = `https://citymapper.com/directions?startlocation=me&endaddress=${encodedDest}&set_address=${encodedDest}`;
+            
+            window.open(url, '_blank');
+        }
+
+        function calculateDeparture() {
+            const start = document.getElementById('work-start').value;
+            const travel = parseInt(document.getElementById('travel-time').value) || 0;
+            if (!start) return;
+            
+            const [h, m] = start.split(':').map(Number);
+            let d = new Date(); d.setHours(h, m, 0, 0);
+            
+            // Deduct travel time
+            d.setMinutes(d.getMinutes() - travel);
+            document.getElementById('leave-time').innerText = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+            
+            // Deduct 1.5 Hour (90 mins) Ritual
+            d.setMinutes(d.getMinutes() - 90);
+            document.getElementById('prep-time').innerText = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+            
+            document.getElementById('result-box').style.display = 'block';
+        }
+
+        // --- RELIC LOGIC ---
+
         document.getElementById('edit-toggle').onclick = (e) => {
             const user = auth.currentUser;
             if (!user || user.uid !== MY_UID) {
@@ -182,28 +218,6 @@
             loadRelics(); 
         };
 
-        function openCitymapper() {
-            const dest = document.getElementById('dest-address').value;
-            if (!dest) { alert("Please enter a destination first."); return; }
-            // Opens Citymapper with destination encoded
-            const url = `https://citymapper.com/directions?endaddress=${encodeURIComponent(dest)}`;
-            window.open(url, '_blank');
-        }
-
-        function calculateDeparture() {
-            const start = document.getElementById('work-start').value;
-            const travel = parseInt(document.getElementById('travel-time').value) || 0;
-            if (!start) return;
-            const [h, m] = start.split(':').map(Number);
-            let d = new Date(); d.setHours(h, m, 0, 0);
-            d.setMinutes(d.getMinutes() - travel);
-            document.getElementById('leave-time').innerText = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-            d.setMinutes(d.getMinutes() - 90);
-            document.getElementById('prep-time').innerText = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-            document.getElementById('result-box').style.display = 'block';
-        }
-
-        // --- PRESERVED BOOKMARK LOGIC ---
         function loadRelics() {
             rtdb.ref('relics').off();
             rtdb.ref('relics').on('value', snap => {
@@ -224,12 +238,14 @@
                     } else {
                         wrap.innerHTML = `<div class="relic-frame"><img src="${d.imgUrl || ''}"></div><span class="relic-name">${d.name}</span>`;
                     }
+
                     wrap.onpointerdown = (e) => {
                         if(!isEditMode) return;
                         window.longPressed = false; startX = e.clientX; startY = e.clientY;
                         window.pTimer = setTimeout(() => { window.longPressed = true; showContextMenu(e, id); }, 700);
                         dragItem = wrap; wrap.setPointerCapture(e.pointerId);
                     };
+
                     wrap.onpointermove = (e) => {
                         if (!dragItem || window.longPressed) return;
                         if (Math.hypot(e.clientX - startX, e.clientY - startY) > 15) {
@@ -246,6 +262,7 @@
                             }
                         }
                     };
+
                     wrap.onpointerup = (e) => {
                         clearTimeout(window.pTimer);
                         if (ghostItem) { ghostItem.remove(); ghostItem = null; dragItem.classList.remove('placeholder'); }
@@ -259,6 +276,7 @@
                 });
             });
         }
+
         async function reorderRelics(sId, tId) {
             const siblings = Object.keys(allRelics).filter(id => allRelics[id].parent === currentFolder).sort((a,b) => (allRelics[a].sortOrder||0)-(allRelics[b].sortOrder||0));
             const from = siblings.indexOf(sId), to = siblings.indexOf(tId);
@@ -266,21 +284,31 @@
             const updates = {}; siblings.forEach((id, i) => { updates[`relics/${id}/sortOrder`] = i; });
             await rtdb.ref().update(updates);
         }
+
         function showContextMenu(e, id) {
             selectedRelicId = id; const menu = document.getElementById('context-menu');
             menu.style.display = 'block'; menu.style.left = e.clientX + 'px'; menu.style.top = e.clientY + 'px';
         }
+
         window.menuAction = (type) => {
-            if (type === 'delete' && confirm("Purge this relic?")) rtdb.ref('relics/' + selectedRelicId).remove();
+            if (type === 'delete' && confirm("Purge this relic with confirmation?")) rtdb.ref('relics/' + selectedRelicId).remove();
             if (type === 'edit') {
                 const n = prompt("Rename:", allRelics[selectedRelicId].name), u = prompt("URL:", allRelics[selectedRelicId].url);
                 if (n || u) rtdb.ref('relics/' + selectedRelicId).update({ name: n || allRelics[selectedRelicId].name, url: u || allRelics[selectedRelicId].url });
             }
             document.getElementById('context-menu').style.display = 'none';
         };
+
         function enterFolder(id, name) { currentFolder = id; document.getElementById('status-text').innerText = name; document.getElementById('back-btn').style.display = 'block'; loadRelics(); }
         function goBack() { currentFolder = 'root'; document.getElementById('status-text').innerText = "Archive"; document.getElementById('back-btn').style.display = 'none'; loadRelics(); }
-        window.onclick = (e) => { if(!e.target.closest('.menu-item')) { document.getElementById('context-menu').style.display = 'none'; document.getElementById('move-menu').style.display = 'none'; } };
+        
+        window.onclick = (e) => { 
+            if(!e.target.closest('.menu-item')) { 
+                document.getElementById('context-menu').style.display = 'none'; 
+                document.getElementById('move-menu').style.display = 'none'; 
+            } 
+        };
+
         document.getElementById('r-save').onclick = async () => {
             const n = document.getElementById('r-name').value, u = document.getElementById('r-url').value, t = document.getElementById('r-type').value, f = document.getElementById('r-file').files[0];
             if(!n) return;
@@ -291,6 +319,7 @@
             };
             if(f) { const r = new FileReader(); r.onload = (e) => push(e.target.result); r.readAsDataURL(f); } else { push(""); }
         };
+
         function showMoveMenu() {
             const m = document.getElementById('move-menu'), c = document.getElementById('context-menu');
             m.innerHTML = '<div class="menu-item" onclick="executeMove(\'root\')">Archive (Root)</div>';
@@ -298,6 +327,7 @@
             m.style.display = 'block'; m.style.left = c.style.left; m.style.top = c.style.top; c.style.display = 'none';
         }
         function executeMove(tid) { rtdb.ref('relics/' + selectedRelicId).update({ parent: tid }); document.getElementById('move-menu').style.display = 'none'; }
+        
         document.getElementById('hidden-file-input').onchange = (e) => {
             const r = new FileReader(); r.onload = (ev) => rtdb.ref('relics/' + selectedRelicId).update({ imgUrl: ev.target.result });
             r.readAsDataURL(e.target.files[0]);
