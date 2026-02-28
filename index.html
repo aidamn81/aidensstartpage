@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>The Gothic Archive</title>
     
-    <link rel="apple-touch-icon" href="https://i.imgur.com/uW6k43F.png">
-    <link rel="apple-touch-icon" sizes="120x120" href="https://i.imgur.com/uW6k43F.png">
-    <link rel="apple-touch-icon" sizes="152x152" href="https://i.imgur.com/uW6k43F.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="https://i.imgur.com/uW6k43F.png">
+    <link rel="apple-touch-icon" href="https://img.icons8.com/color/512/compass--v1.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="https://img.icons8.com/color/512/compass--v1.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="https://img.icons8.com/color/512/compass--v1.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://img.icons8.com/color/512/compass--v1.png">
 
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Playfair+Display&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -80,7 +80,6 @@
         /* Context Menu */
         #context-menu { display: none; position: fixed; z-index: 6000; background: #0a0a0a; border: 1px solid var(--gold); padding: 5px; min-width: 140px; box-shadow: 0 5px 15px rgba(0,0,0,0.8); }
         .menu-item { padding: 12px 20px; font-family: 'Cinzel'; font-size: 0.75rem; color: var(--gold); cursor: pointer; border-bottom: 1px solid #1a1a1a; }
-        .menu-item:hover { background: var(--crimson); color: white; }
         .toggle-btn { background: transparent; border: 1px solid var(--gold); color: var(--gold); padding: 8px 15px; font-family: 'Cinzel'; font-size: 0.7rem; cursor: pointer; }
 
         @keyframes wiggle { 0% { transform: rotate(-1deg); } 50% { transform: rotate(1deg); } 100% { transform: rotate(-1deg); } }
@@ -163,22 +162,23 @@
             if (!dest) { alert("Enter a destination first."); return; }
 
             try {
-                // Using OpenStreetMap to turn postcode into GPS coordinates
-                // This prevents Citymapper from looping the start location into the end
+                // Geo-fetching
                 const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(dest)}`);
                 const data = await res.json();
                 
                 let appUrl;
                 if (data && data.length > 0) {
                     const { lat, lon } = data[0];
-                    // endcoord forces the app to pin the specific location
-                    appUrl = `citymapper://directions?endcoord=${lat},${lon}&endname=${encodeURIComponent(dest)}`;
+                    // Using both coordinate and name parameters to force the app's routing engine
+                    appUrl = `citymapper://directions?endcoord=${lat},${lon}&endname=${encodeURIComponent(dest)}&end_address=${encodeURIComponent(dest)}`;
                 } else {
                     appUrl = `citymapper://directions?endaddress=${encodeURIComponent(dest)}`;
                 }
 
+                // Launch App
                 window.location.href = appUrl;
                 
+                // Safari Web Fallback
                 setTimeout(() => {
                     if (document.visibilityState === 'visible') {
                         window.open(`https://citymapper.com/directions?endaddress=${encodeURIComponent(dest)}`, '_blank');
