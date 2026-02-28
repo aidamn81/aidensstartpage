@@ -21,8 +21,13 @@
             overflow-x: hidden; touch-action: none; 
         }
 
-        /* Safari Top Bar Shield */
-        #top-shield { width: 100%; height: calc(80px + env(safe-area-inset-top, 0px)); flex-shrink: 0; display: block; }
+        /* SAFARI OVERLAP FIX: Increased height for the top buffer */
+        #top-shield { 
+            width: 100%; 
+            height: calc(110px + env(safe-area-inset-top, 0px)); 
+            flex-shrink: 0; 
+            display: block; 
+        }
 
         #top-controls { 
             width: 100%; padding: 15px 20px; display: flex; justify-content: space-between; 
@@ -34,19 +39,19 @@
         #archive-grid { 
             display: grid; padding: 10px; 
             grid-template-columns: repeat(auto-fill, 62px); 
-            gap: 12px 2px; width: 100%; max-width: 1200px;
+            gap: 15px 2px; width: 100%; max-width: 1200px;
             justify-content: center; align-items: start; box-sizing: border-box;
             position: relative;
         }
 
         @media only screen and (max-width: 600px) {
-            #archive-grid { grid-template-columns: repeat(6, 1fr); gap: 12px 0px; padding: 10px 5px; }
+            #archive-grid { grid-template-columns: repeat(6, 1fr); gap: 15px 0px; padding: 10px 5px; }
         }
 
         /* Wiggle & Drag Animations */
-        @keyframes wiggle { 0% { transform: rotate(-1deg); } 50% { transform: rotate(1.5deg); } 100% { transform: rotate(-1deg); } }
+        @keyframes wiggle { 0% { transform: rotate(-1.2deg); } 50% { transform: rotate(1.8deg); } 100% { transform: rotate(-1.2deg); } }
         .relic-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; cursor: pointer; user-select: none; transition: transform 0.2s ease, opacity 0.2s ease; touch-action: none; }
-        .wiggle-mode .relic-wrapper:not(.is-dragging) { animation: wiggle 0.3s infinite ease-in-out; }
+        .wiggle-mode .relic-wrapper:not(.is-dragging) { animation: wiggle 0.25s infinite ease-in-out; }
         .relic-wrapper.is-dragging { opacity: 0.7; transform: scale(1.2) !important; z-index: 5000; position: fixed; pointer-events: none; animation: none !important; }
         .relic-wrapper.placeholder { opacity: 0.1; animation: none !important; }
 
@@ -61,21 +66,21 @@
         .folder-text-entry { font-family: 'Cinzel', serif; font-size: 0.38rem; color: var(--gold); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: uppercase; border-bottom: 0.5px solid rgba(140, 115, 64, 0.15); padding: 1px 0; line-height: 1; }
         .relic-name { margin-top: 1px; font-family: 'Cinzel'; font-size: 0.63rem; text-align: center; color: var(--gold); width: 100%; max-width: 64px; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
 
-        /* Time Calculator Widget Styles */
+        /* Time Calculator Widget */
         #time-widget {
-            background: rgba(5, 5, 5, 0.8); border: 1px solid var(--gold); padding: 20px;
+            background: rgba(5, 5, 5, 0.9); border: 1px solid var(--gold); padding: 20px;
             width: 280px; font-family: 'Cinzel', serif; color: var(--gold);
-            box-shadow: 0 0 15px rgba(140, 115, 64, 0.1); margin: 40px auto; text-align: center;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.8); margin: 60px auto 40px; text-align: center;
         }
         .widget-title { font-size: 0.9rem; margin-bottom: 15px; border-bottom: 1px solid var(--crimson); padding-bottom: 5px; letter-spacing: 2px; }
         .input-group { margin-bottom: 12px; text-align: left; }
         .input-group label { display: block; font-size: 0.6rem; text-transform: uppercase; margin-bottom: 4px; color: var(--text); }
-        .time-input { background: #000; border: 1px solid #333; color: #fff; padding: 8px; width: 100%; box-sizing: border-box; font-family: 'Playfair Display', serif; }
+        .time-input { background: #000; border: 1px solid #333; color: #fff; padding: 8px; width: 100%; box-sizing: border-box; font-family: 'Playfair Display', serif; border-radius: 0; }
         #result-box { margin-top: 20px; padding: 10px; border: 1px dashed var(--crimson); background: rgba(122, 0, 0, 0.05); display: none; }
         .departure-time { font-size: 1.5rem; color: #fff; display: block; margin-top: 5px; }
-        .calc-btn { background: var(--crimson); color: white; border: none; padding: 10px; width: 100%; cursor: pointer; font-family: 'Cinzel'; font-size: 0.75rem; }
+        .calc-btn { background: var(--crimson); color: white; border: none; padding: 10px; width: 100%; cursor: pointer; font-family: 'Cinzel'; font-size: 0.75rem; margin-top: 5px; }
 
-        /* Admin UI */
+        /* Context Menu Styles */
         #context-menu, #move-menu { display: none; position: fixed; z-index: 6000; background: #0a0a0a; border: 1px solid var(--gold); padding: 5px; min-width: 140px; }
         .menu-item { padding: 12px 20px; font-family: 'Cinzel'; font-size: 0.75rem; color: var(--gold); cursor: pointer; border-bottom: 1px solid #1a1a1a; }
         .menu-item:hover { background: var(--crimson); color: white; }
@@ -96,10 +101,10 @@
     <div id="top-shield"></div>
 
     <section id="admin-desk">
-        <input type="text" id="r-name" placeholder="Name" class="time-input" style="margin-bottom:5px;">
-        <input type="text" id="r-url" placeholder="URL" class="time-input" style="margin-bottom:5px;">
-        <select id="r-type" class="time-input" style="margin-bottom:5px;"><option value="link">Relic</option><option value="folder">Folder</option></select>
-        <input type="file" id="r-file" accept="image/*" class="time-input" style="margin-bottom:5px;">
+        <input type="text" id="r-name" placeholder="Name" class="time-input">
+        <input type="text" id="r-url" placeholder="URL" class="time-input">
+        <select id="r-type" class="time-input"><option value="link">Relic</option><option value="folder">Folder</option></select>
+        <input type="file" id="r-file" accept="image/*" class="time-input">
         <button id="r-save" class="toggle-btn" style="background:var(--crimson); color:white; border:none; width:100%;">Commemorate</button>
     </section>
 
@@ -112,15 +117,15 @@
             <input type="time" id="work-start" class="time-input" value="09:00">
         </div>
         <div class="input-group">
-            <label>Journey Time (Min)</label>
+            <label>Journey Duration (Min)</label>
             <input type="number" id="travel-time" class="time-input" value="45">
         </div>
-        <button class="calc-btn" onclick="calculateDeparture()">Calculate Oracle</button>
+        <button class="calc-btn" onclick="calculateDeparture()">Consult the Sands</button>
         <div id="result-box">
-            <span style="font-size: 0.6rem; text-transform: uppercase;">Prep Ritual Begins:</span>
+            <span style="font-size: 0.6rem; text-transform: uppercase;">Preparation Ritual:</span>
             <span id="prep-time" class="departure-time" style="font-size: 1rem; color: var(--gold);">--:--</span>
             <hr style="border: 0; border-top: 1px solid #333; margin: 10px 0;">
-            <span style="font-size: 0.6rem; text-transform: uppercase;">Leave For Journey:</span>
+            <span style="font-size: 0.6rem; text-transform: uppercase;">Must Depart By:</span>
             <span id="leave-time" class="departure-time">--:--</span>
         </div>
     </div>
@@ -131,7 +136,6 @@
         <div class="menu-item" onclick="showMoveMenu()">Move To...</div>
         <div class="menu-item" onclick="menuAction('delete')" style="color:var(--crimson);">Purge (Delete)</div>
     </div>
-
     <div id="move-menu"></div>
     <input type="file" id="hidden-file-input" style="display:none" accept="image/*">
 
@@ -160,7 +164,7 @@
             if (!user || user.uid !== MY_UID) {
                 const email = prompt("Email:");
                 const pass = prompt("Key:");
-                auth.signInWithEmailAndPassword(email, pass).catch(e => alert(e.message));
+                auth.signInWithEmailAndPassword(email, pass).catch(err => alert(err.message));
                 return;
             }
             isEditMode = !isEditMode;
@@ -176,20 +180,19 @@
                 allRelics = snap.val() || {};
                 const grid = document.getElementById('archive-grid');
                 grid.innerHTML = '';
-                const currentLevelItems = Object.keys(allRelics)
-                    .filter(id => allRelics[id].parent === currentFolder)
+                const items = Object.keys(allRelics).filter(id => allRelics[id].parent === currentFolder)
                     .sort((a, b) => (allRelics[a].sortOrder || 0) - (allRelics[b].sortOrder || 0));
 
-                currentLevelItems.forEach((id) => {
+                items.forEach(id => {
                     const d = allRelics[id];
                     const wrap = document.createElement('div');
                     wrap.className = 'relic-wrapper';
                     wrap.dataset.id = id;
 
                     if (d.type === 'folder') {
-                        const children = Object.values(allRelics).filter(item => item.parent === id);
-                        let namesHtml = children.map(c => `<div class="folder-text-entry">${c.name}</div>`).join('');
-                        wrap.innerHTML = `<div class="relic-frame folder-icon">${namesHtml}</div><span class="relic-name">${d.name}</span>`;
+                        const kids = Object.values(allRelics).filter(item => item.parent === id);
+                        let html = kids.map(c => `<div class="folder-text-entry">${c.name}</div>`).join('');
+                        wrap.innerHTML = `<div class="relic-frame folder-icon">${html}</div><span class="relic-name">${d.name}</span>`;
                     } else {
                         wrap.innerHTML = `<div class="relic-frame"><img src="${d.imgUrl || ''}"></div><span class="relic-name">${d.name}</span>`;
                     }
@@ -216,9 +219,9 @@
                             ghostItem.style.top = `${e.clientY - 40}px`;
                             const target = document.elementsFromPoint(e.clientX, e.clientY).find(el => el.classList.contains('relic-wrapper') && el !== dragItem && el !== ghostItem);
                             if (target) {
-                                const targetId = target.dataset.id;
-                                const sourceId = dragItem.dataset.id;
-                                if (sourceId !== targetId) reorderRelics(sourceId, targetId);
+                                const tId = target.dataset.id;
+                                const sId = dragItem.dataset.id;
+                                if (sId !== tId) reorderRelics(sId, tId);
                             }
                         }
                     };
@@ -237,28 +240,24 @@
             });
         }
 
-        async function reorderRelics(sourceId, targetId) {
-            const siblings = Object.keys(allRelics).filter(id => allRelics[id].parent === currentFolder).sort((a, b) => (allRelics[a].sortOrder || 0) - (allRelics[b].sortOrder || 0));
-            const fromIndex = siblings.indexOf(sourceId);
-            const toIndex = siblings.indexOf(targetId);
-            siblings.splice(fromIndex, 1);
-            siblings.splice(toIndex, 0, sourceId);
-            const updates = {};
-            siblings.forEach((id, i) => { updates[`relics/${id}/sortOrder`] = i; });
+        async function reorderRelics(sId, tId) {
+            const siblings = Object.keys(allRelics).filter(id => allRelics[id].parent === currentFolder).sort((a,b) => (allRelics[a].sortOrder||0)-(allRelics[b].sortOrder||0));
+            const from = siblings.indexOf(sId), to = siblings.indexOf(tId);
+            siblings.splice(from, 1); siblings.splice(to, 0, sId);
+            const updates = {}; siblings.forEach((id, i) => { updates[`relics/${id}/sortOrder`] = i; });
             await rtdb.ref().update(updates);
         }
 
         function calculateDeparture() {
-            const startTime = document.getElementById('work-start').value;
-            const travelMinutes = parseInt(document.getElementById('travel-time').value) || 0;
-            if (!startTime) return;
-            const [hours, minutes] = startTime.split(':').map(Number);
-            let date = new Date();
-            date.setHours(hours, minutes, 0, 0);
-            date.setMinutes(date.getMinutes() - travelMinutes);
-            document.getElementById('leave-time').innerText = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-            date.setMinutes(date.getMinutes() - 90);
-            document.getElementById('prep-time').innerText = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+            const start = document.getElementById('work-start').value;
+            const travel = parseInt(document.getElementById('travel-time').value) || 0;
+            if (!start) return;
+            const [h, m] = start.split(':').map(Number);
+            let d = new Date(); d.setHours(h, m, 0, 0);
+            d.setMinutes(d.getMinutes() - travel);
+            document.getElementById('leave-time').innerText = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+            d.setMinutes(d.getMinutes() - 90);
+            document.getElementById('prep-time').innerText = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
             document.getElementById('result-box').style.display = 'block';
         }
 
@@ -266,16 +265,15 @@
             selectedRelicId = id;
             const menu = document.getElementById('context-menu');
             menu.style.display = 'block';
-            menu.style.left = (e.clientX || e.pageX) + 'px';
-            menu.style.top = (e.clientY || e.pageY) + 'px';
+            menu.style.left = e.clientX + 'px'; menu.style.top = e.clientY + 'px';
         }
 
         window.menuAction = (type) => {
-            if (type === 'delete' && confirm("Purge this relic with confirmation?")) rtdb.ref('relics/' + selectedRelicId).remove();
+            if (type === 'delete' && confirm("Purge this relic?")) rtdb.ref('relics/' + selectedRelicId).remove();
             if (type === 'edit') {
-                const newName = prompt("Rename:", allRelics[selectedRelicId].name);
-                const newUrl = prompt("URL:", allRelics[selectedRelicId].url);
-                if (newName || newUrl) rtdb.ref('relics/' + selectedRelicId).update({ name: newName || allRelics[selectedRelicId].name, url: newUrl || allRelics[selectedRelicId].url });
+                const n = prompt("Rename:", allRelics[selectedRelicId].name);
+                const u = prompt("URL:", allRelics[selectedRelicId].url);
+                if (n || u) rtdb.ref('relics/' + selectedRelicId).update({ name: n || allRelics[selectedRelicId].name, url: u || allRelics[selectedRelicId].url });
             }
             document.getElementById('context-menu').style.display = 'none';
         };
@@ -285,35 +283,26 @@
         window.onclick = (e) => { if(!e.target.closest('.menu-item')) { document.getElementById('context-menu').style.display = 'none'; document.getElementById('move-menu').style.display = 'none'; } };
 
         document.getElementById('r-save').onclick = async () => {
-            const name = document.getElementById('r-name').value;
-            const url = document.getElementById('r-url').value;
-            const type = document.getElementById('r-type').value;
-            const file = document.getElementById('r-file').files[0];
-            if(!name) return;
-            const existingCount = Object.values(allRelics).filter(r => r.parent === currentFolder).length;
-            const pushData = (img) => {
-                rtdb.ref('relics').push({ name, url: type === 'folder' ? '' : url, type, imgUrl: img || '', parent: currentFolder, timestamp: Date.now(), sortOrder: existingCount });
+            const n = document.getElementById('r-name').value, u = document.getElementById('r-url').value, t = document.getElementById('r-type').value, f = document.getElementById('r-file').files[0];
+            if(!n) return;
+            const count = Object.values(allRelics).filter(r => r.parent === currentFolder).length;
+            const push = (img) => {
+                rtdb.ref('relics').push({ name: n, url: t === 'folder' ? '' : u, type: t, imgUrl: img || '', parent: currentFolder, timestamp: Date.now(), sortOrder: count });
                 document.getElementById('r-name').value = ''; document.getElementById('r-url').value = '';
             };
-            if(file) {
-                const reader = new FileReader();
-                reader.onload = (e) => pushData(e.target.result);
-                reader.readAsDataURL(file);
-            } else { pushData(""); }
+            if(f) { const r = new FileReader(); r.onload = (e) => push(e.target.result); r.readAsDataURL(f); } else { push(""); }
         };
 
         function showMoveMenu() {
-            const moveMenu = document.getElementById('move-menu');
-            const contextMenu = document.getElementById('context-menu');
-            moveMenu.innerHTML = '<div class="menu-item" onclick="executeMove(\'root\')">Archive (Root)</div>';
-            Object.keys(allRelics).forEach(id => { if(allRelics[id].type === 'folder' && id !== selectedRelicId) moveMenu.innerHTML += `<div class="menu-item" onclick="executeMove('${id}')">${allRelics[id].name}</div>`; });
-            moveMenu.style.display = 'block'; moveMenu.style.left = contextMenu.style.left; moveMenu.style.top = contextMenu.style.top; contextMenu.style.display = 'none';
+            const m = document.getElementById('move-menu'), c = document.getElementById('context-menu');
+            m.innerHTML = '<div class="menu-item" onclick="executeMove(\'root\')">Archive (Root)</div>';
+            Object.keys(allRelics).forEach(id => { if(allRelics[id].type === 'folder' && id !== selectedRelicId) m.innerHTML += `<div class="menu-item" onclick="executeMove('${id}')">${allRelics[id].name}</div>`; });
+            m.style.display = 'block'; m.style.left = c.style.left; m.style.top = c.style.top; c.style.display = 'none';
         }
-        function executeMove(targetId) { rtdb.ref('relics/' + selectedRelicId).update({ parent: targetId }); document.getElementById('move-menu').style.display = 'none'; }
+        function executeMove(tid) { rtdb.ref('relics/' + selectedRelicId).update({ parent: tid }); document.getElementById('move-menu').style.display = 'none'; }
         document.getElementById('hidden-file-input').onchange = (e) => {
-            const reader = new FileReader();
-            reader.onload = (ev) => rtdb.ref('relics/' + selectedRelicId).update({ imgUrl: ev.target.result });
-            reader.readAsDataURL(e.target.files[0]);
+            const r = new FileReader(); r.onload = (ev) => rtdb.ref('relics/' + selectedRelicId).update({ imgUrl: ev.target.result });
+            r.readAsDataURL(e.target.files[0]);
         };
     </script>
 </body>
