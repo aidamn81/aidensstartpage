@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>The Gothic Archive</title>
+    
+    <link rel="apple-touch-icon" href="https://i.imgur.com/uW6k43F.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="https://i.imgur.com/uW6k43F.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="https://i.imgur.com/uW6k43F.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://i.imgur.com/uW6k43F.png">
+
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Playfair+Display&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -45,10 +51,9 @@
         }
         .widget-title { font-size: 0.9rem; margin-bottom: 15px; border-bottom: 1px solid var(--crimson); padding-bottom: 5px; letter-spacing: 2px; }
         
-        /* Saved Locations Shelf */
         #saved-shelf { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 15px; justify-content: center; min-height: 20px; }
         .dest-chip { background: #111; border: 1px solid var(--gold); color: var(--gold); padding: 5px 10px; font-size: 0.6rem; cursor: pointer; text-transform: uppercase; transition: 0.2s; }
-        .dest-chip:active { transform: scale(0.9); background: var(--crimson); }
+        .dest-chip:active { transform: scale(0.95); background: var(--crimson); }
 
         .input-group { margin-bottom: 12px; text-align: left; }
         .input-group label { display: block; font-size: 0.55rem; text-transform: uppercase; margin-bottom: 4px; color: var(--text); }
@@ -62,26 +67,30 @@
         .save-loc-btn { background: transparent; color: var(--gold); border: 1px solid #444; font-size: 0.5rem; padding: 5px; cursor: pointer; width: 100%; margin-top: 5px; }
 
         /* Relic Styling */
-        .relic-wrapper { display: flex; flex-direction: column; align-items: center; position: relative; cursor: pointer; }
-        .relic-frame { width: 50px; height: 68px; position: relative; display: flex; align-items: center; justify-content: center; }
+        .relic-wrapper { display: flex; flex-direction: column; align-items: center; position: relative; cursor: pointer; transition: 0.2s; }
+        .relic-frame { width: 50px; height: 68px; position: relative; display: flex; align-items: center; justify-content: center; pointer-events: none; }
         .relic-frame::before {
             content: ""; position: absolute; top: -6px; left: -6px; right: -6px; bottom: -6px;
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 120'%3E%3Cellipse cx='50' cy='60' rx='40' ry='50' fill='none' stroke='%237a0000' stroke-width='4'/%3E%3Cellipse cx='50' cy='60' rx='36' ry='46' fill='none' stroke='%238c7340' stroke-width='2'/%3E%3C/svg%3E");
-            background-size: contain; background-repeat: no-repeat;
+            background-size: contain; background-repeat: no-repeat; z-index: 5;
         }
-        .relic-frame img { width: 42px; height: 58px; object-fit: cover; clip-path: ellipse(50% 50% at 50% 50%); }
-        .relic-name { margin-top: 2px; font-family: 'Cinzel'; font-size: 0.6rem; color: var(--gold); text-align: center; }
+        .relic-frame img { width: 42px; height: 58px; object-fit: cover; clip-path: ellipse(50% 50% at 50% 50%); filter: sepia(0.3); }
+        .relic-name { margin-top: 2px; font-family: 'Cinzel'; font-size: 0.6rem; color: var(--gold); text-align: center; max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
         /* Context Menu */
-        #context-menu { display: none; position: fixed; z-index: 6000; background: #0a0a0a; border: 1px solid var(--gold); padding: 5px; }
+        #context-menu { display: none; position: fixed; z-index: 6000; background: #0a0a0a; border: 1px solid var(--gold); padding: 5px; min-width: 140px; box-shadow: 0 5px 15px rgba(0,0,0,0.8); }
         .menu-item { padding: 12px 20px; font-family: 'Cinzel'; font-size: 0.75rem; color: var(--gold); cursor: pointer; border-bottom: 1px solid #1a1a1a; }
+        .menu-item:hover { background: var(--crimson); color: white; }
         .toggle-btn { background: transparent; border: 1px solid var(--gold); color: var(--gold); padding: 8px 15px; font-family: 'Cinzel'; font-size: 0.7rem; cursor: pointer; }
+
+        @keyframes wiggle { 0% { transform: rotate(-1deg); } 50% { transform: rotate(1deg); } 100% { transform: rotate(-1deg); } }
+        .wiggle-mode .relic-wrapper { animation: wiggle 0.3s infinite; }
     </style>
 </head>
 <body>
 
     <div id="top-controls">
-        <span style="font-family:'Cinzel'; font-size:0.75rem; color:var(--gold);">Gothic Archive</span>
+        <span id="status-text" style="font-family:'Cinzel'; font-size:0.75rem; color:var(--gold);">Gothic Archive</span>
         <button id="edit-toggle" class="toggle-btn">Edit Mode</button>
     </div>
 
@@ -106,7 +115,7 @@
         </div>
 
         <div class="input-group">
-            <label>Journey Minutes (Current)</label>
+            <label>Journey Minutes</label>
             <input type="number" id="travel-time" class="time-input" value="45">
         </div>
         
@@ -148,20 +157,21 @@
             renderSavedShelf();
         });
 
-        // --- CITYMAPPER ENGINE ---
+        // --- CITYMAPPER COORDINATE RESOLVER ---
         async function openCitymapper() {
             const dest = document.getElementById('dest-address').value;
             if (!dest) { alert("Enter a destination first."); return; }
 
             try {
-                // We resolve to coordinates to ensure the App populates the 'To' field
+                // Using OpenStreetMap to turn postcode into GPS coordinates
+                // This prevents Citymapper from looping the start location into the end
                 const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(dest)}`);
                 const data = await res.json();
                 
                 let appUrl;
                 if (data && data.length > 0) {
                     const { lat, lon } = data[0];
-                    // endcoord=lat,lon is the strongest deep-link for the Citymapper iOS app
+                    // endcoord forces the app to pin the specific location
                     appUrl = `citymapper://directions?endcoord=${lat},${lon}&endname=${encodeURIComponent(dest)}`;
                 } else {
                     appUrl = `citymapper://directions?endaddress=${encodeURIComponent(dest)}`;
@@ -169,7 +179,6 @@
 
                 window.location.href = appUrl;
                 
-                // Fallback to web if app fails
                 setTimeout(() => {
                     if (document.visibilityState === 'visible') {
                         window.open(`https://citymapper.com/directions?endaddress=${encodeURIComponent(dest)}`, '_blank');
@@ -180,7 +189,7 @@
             }
         }
 
-        // --- SAVED SHELF LOGIC ---
+        // --- SAVED SHELF ---
         function addSavedLocation() {
             const dest = document.getElementById('dest-address').value;
             if(!dest) return;
@@ -201,7 +210,6 @@
                 chip.className = 'dest-chip';
                 chip.innerText = loc;
                 chip.onclick = () => { document.getElementById('dest-address').value = loc; };
-                // Right click/Long press to delete a saved location
                 chip.oncontextmenu = (e) => { e.preventDefault(); removeLoc(loc); };
                 shelf.appendChild(chip);
             });
@@ -214,7 +222,7 @@
             renderSavedShelf();
         }
 
-        // --- ORACLE CALCULATOR ---
+        // --- ORACLE ---
         function calculateOracle() {
             const start = document.getElementById('work-start').value;
             const travel = parseInt(document.getElementById('travel-time').value) || 0;
@@ -228,7 +236,7 @@
             document.getElementById('result-box').style.display = 'block';
         }
 
-        // --- FIREBASE RELICS ---
+        // --- RELIC MANAGEMENT ---
         function loadRelics() {
             rtdb.ref('relics').on('value', snap => {
                 const grid = document.getElementById('archive-grid');
@@ -238,10 +246,9 @@
                     const r = data[id];
                     const wrap = document.createElement('div');
                     wrap.className = 'relic-wrapper';
-                    wrap.innerHTML = `<div class="relic-frame"><img src="${r.imgUrl}"></div><div class="relic-name">${r.name}</div>`;
+                    wrap.innerHTML = `<div class="relic-frame"><img src="${r.imgUrl || ''}"></div><div class="relic-name">${r.name}</div>`;
                     
-                    wrap.onclick = () => { if(!isEditMode) window.open(r.url, '_blank'); };
-                    
+                    wrap.onclick = () => { if(!isEditMode && r.url) window.open(r.url, '_blank'); };
                     wrap.onpointerdown = (e) => {
                         if(!isEditMode) return;
                         selectedRelicId = id;
@@ -262,7 +269,7 @@
 
         function menuAction(type) {
             if(type === 'delete') {
-                if(confirm("Are you sure you want to purge this relic?")) {
+                if(confirm("Confirm: Purge this relic from the archive?")) {
                     rtdb.ref('relics/' + selectedRelicId).remove();
                 }
             }
@@ -271,6 +278,7 @@
 
         document.getElementById('edit-toggle').onclick = () => {
             isEditMode = !isEditMode;
+            document.body.classList.toggle('wiggle-mode', isEditMode);
             document.getElementById('edit-toggle').innerText = isEditMode ? "Lock Archive" : "Edit Mode";
             if(isEditMode && !auth.currentUser) auth.signInAnonymously();
         };
