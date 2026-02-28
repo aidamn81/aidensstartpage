@@ -21,7 +21,6 @@
             overflow-x: hidden; touch-action: none; 
         }
 
-        /* Safari Overlap Fix */
         #top-shield { width: 100%; height: calc(115px + env(safe-area-inset-top, 0px)); flex-shrink: 0; display: block; }
 
         #top-controls { 
@@ -61,7 +60,7 @@
         .folder-text-entry { font-family: 'Cinzel', serif; font-size: 0.38rem; color: var(--gold); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: uppercase; border-bottom: 0.5px solid rgba(140, 115, 64, 0.15); padding: 1px 0; line-height: 1; }
         .relic-name { margin-top: 1px; font-family: 'Cinzel'; font-size: 0.63rem; text-align: center; color: var(--gold); width: 100%; max-width: 64px; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
 
-        /* Oracle Widget */
+        /* Oracle Widget Customization */
         #time-widget {
             background: rgba(5, 5, 5, 0.9); border: 1px solid var(--gold); padding: 20px;
             width: 290px; font-family: 'Cinzel', serif; color: var(--gold);
@@ -77,6 +76,7 @@
         
         .calc-btn { background: var(--crimson); color: white; border: none; padding: 12px; width: 100%; cursor: pointer; font-family: 'Cinzel'; font-size: 0.75rem; margin-top: 5px; text-transform: uppercase; letter-spacing: 1px; }
         .portal-link { font-size: 0.6rem; color: var(--gold); text-decoration: underline; cursor: pointer; display: block; margin-top: 8px; text-align: right; font-style: italic; }
+        .save-btn { background: transparent; color: var(--text); border: 1px solid #333; font-size: 0.5rem; padding: 4px; cursor: pointer; margin-top: 5px; width: 100%; }
 
         /* Admin UI */
         #context-menu, #move-menu { display: none; position: fixed; z-index: 6000; background: #0a0a0a; border: 1px solid var(--gold); padding: 5px; min-width: 140px; }
@@ -119,6 +119,7 @@
         <div class="input-group">
             <label>Destination (Postcode Preferred)</label>
             <input type="text" id="dest-address" class="time-input" placeholder="e.g. SW1A 1AA">
+            <button class="save-btn" onclick="saveOracleSettings()">Save Destination</button>
             <span class="portal-link" onclick="openCitymapper()">Consult Citymapper App →</span>
         </div>
 
@@ -167,23 +168,50 @@
         let isEditMode = false, selectedRelicId = null, currentFolder = 'root', allRelics = {};
         let dragItem = null, ghostItem = null, startX, startY;
 
-        window.addEventListener('load', loadRelics);
+        window.addEventListener('load', () => {
+            loadRelics();
+            loadOracleSettings();
+        });
 
-        // --- UPDATED CITYMAPPER LOGIC ---
+        // --- IMPROVED CITYMAPPER & SAVING ---
+
+        function saveOracleSettings() {
+            const dest = document.getElementById('dest-address').value;
+            const time = document.getElementById('work-start').value;
+            localStorage.setItem('oracle_dest', dest);
+            localStorage.setItem('oracle_time', time);
+            alert("Oracle Memory Updated.");
+        }
+
+        function loadOracleSettings() {
+            const savedDest = localStorage.getItem('oracle_dest');
+            const savedTime = localStorage.getItem('oracle_time');
+            if (savedDest) document.getElementById('dest-address').value = savedDest;
+            if (savedTime) document.getElementById('work-start').value = savedTime;
+        }
+
         function openCitymapper() {
             const destInput = document.getElementById('dest-address').value;
             if (!destInput) { alert("Enter a destination first."); return; }
             
-            // This is the cleanest link format for the iPad app to pick up
             const cleanDest = encodeURIComponent(destInput);
-            const appUrl = `citymapper://directions?endaddress=${cleanDest}&endname=Work`;
-            const webUrl = `https://citymapper.com/directions?endaddress=${cleanDest}`;
+            
+            // This is the direct App-Specific Deep Link for Directions
+            // Format: citymapper://directions?endaddress=POSTCODE&endname=NAME
+            const appUrl = `citymapper://directions?endaddress=${cleanDest}&endname=Destination`;
+            
+            // Web fallback specifically optimized for mobile Safari
+            const webUrl = `https://citymapper.com/directions?startlocation=me&endaddress=${cleanDest}`;
 
-            // Try to open the app first, fallback to web if app isn't installed
+            // Attempt to launch the App
             window.location.href = appUrl;
+
+            // Fallback: If app doesn't open in 1 second, open the web portal
             setTimeout(() => {
-                window.open(webUrl, '_blank');
-            }, 500);
+                if (document.visibilityState === 'visible') {
+                    window.open(webUrl, '_blank');
+                }
+            }, 1000);
         }
 
         function calculateDeparture() {
@@ -199,7 +227,7 @@
             document.getElementById('result-box').style.display = 'block';
         }
 
-        // --- RELIC CORE LOGIC ---
+        // --- PRESERVED RELIC LOGIC ---
         document.getElementById('edit-toggle').onclick = (e) => {
             const user = auth.currentUser;
             if (!user || user.uid !== MY_UID) {
