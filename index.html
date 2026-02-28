@@ -21,7 +21,7 @@
             overflow-x: hidden; touch-action: none; 
         }
 
-        /* SAFARI OVERLAP FIX: Increased height for the top buffer */
+        /* Safari Overlap Fix */
         #top-shield { 
             width: 100%; 
             height: calc(110px + env(safe-area-inset-top, 0px)); 
@@ -66,7 +66,7 @@
         .folder-text-entry { font-family: 'Cinzel', serif; font-size: 0.38rem; color: var(--gold); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: uppercase; border-bottom: 0.5px solid rgba(140, 115, 64, 0.15); padding: 1px 0; line-height: 1; }
         .relic-name { margin-top: 1px; font-family: 'Cinzel'; font-size: 0.63rem; text-align: center; color: var(--gold); width: 100%; max-width: 64px; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
 
-        /* Time Calculator Widget */
+        /* Oracle Widget Update */
         #time-widget {
             background: rgba(5, 5, 5, 0.9); border: 1px solid var(--gold); padding: 20px;
             width: 280px; font-family: 'Cinzel', serif; color: var(--gold);
@@ -79,6 +79,7 @@
         #result-box { margin-top: 20px; padding: 10px; border: 1px dashed var(--crimson); background: rgba(122, 0, 0, 0.05); display: none; }
         .departure-time { font-size: 1.5rem; color: #fff; display: block; margin-top: 5px; }
         .calc-btn { background: var(--crimson); color: white; border: none; padding: 10px; width: 100%; cursor: pointer; font-family: 'Cinzel'; font-size: 0.75rem; margin-top: 5px; }
+        .ritual-note { font-size: 0.55rem; color: var(--crimson); margin-top: 10px; font-style: italic; letter-spacing: 1px; }
 
         /* Context Menu Styles */
         #context-menu, #move-menu { display: none; position: fixed; z-index: 6000; background: #0a0a0a; border: 1px solid var(--gold); padding: 5px; min-width: 140px; }
@@ -120,12 +121,16 @@
             <label>Journey Duration (Min)</label>
             <input type="number" id="travel-time" class="time-input" value="45">
         </div>
+        
+        <div class="ritual-note">+ 1.5 Hour Preparation Ritual</div>
+        
         <button class="calc-btn" onclick="calculateDeparture()">Consult the Sands</button>
+        
         <div id="result-box">
-            <span style="font-size: 0.6rem; text-transform: uppercase;">Preparation Ritual:</span>
+            <span style="font-size: 0.6rem; text-transform: uppercase;">Preparation Begins:</span>
             <span id="prep-time" class="departure-time" style="font-size: 1rem; color: var(--gold);">--:--</span>
             <hr style="border: 0; border-top: 1px solid #333; margin: 10px 0;">
-            <span style="font-size: 0.6rem; text-transform: uppercase;">Must Depart By:</span>
+            <span style="font-size: 0.6rem; text-transform: uppercase;">Time to Depart:</span>
             <span id="leave-time" class="departure-time">--:--</span>
         </div>
     </div>
@@ -254,10 +259,15 @@
             if (!start) return;
             const [h, m] = start.split(':').map(Number);
             let d = new Date(); d.setHours(h, m, 0, 0);
+            
+            // Subtract Journey
             d.setMinutes(d.getMinutes() - travel);
             document.getElementById('leave-time').innerText = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+            
+            // Subtract 1.5 Hour Ritual (90 min)
             d.setMinutes(d.getMinutes() - 90);
             document.getElementById('prep-time').innerText = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+            
             document.getElementById('result-box').style.display = 'block';
         }
 
