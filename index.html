@@ -21,13 +21,8 @@
             overflow-x: hidden; touch-action: none; 
         }
 
-        /* FIX: THE SAFARI TOP BAR SHIELD */
-        #top-shield {
-            width: 100%;
-            height: calc(80px + env(safe-area-inset-top, 0px));
-            flex-shrink: 0;
-            display: block;
-        }
+        /* Safari Top Bar Shield */
+        #top-shield { width: 100%; height: calc(80px + env(safe-area-inset-top, 0px)); flex-shrink: 0; display: block; }
 
         #top-controls { 
             width: 100%; padding: 15px 20px; display: flex; justify-content: space-between; 
@@ -48,7 +43,7 @@
             #archive-grid { grid-template-columns: repeat(6, 1fr); gap: 12px 0px; padding: 10px 5px; }
         }
 
-        /* Wiggle & Drag Preserved */
+        /* Wiggle & Drag Animations */
         @keyframes wiggle { 0% { transform: rotate(-1deg); } 50% { transform: rotate(1.5deg); } 100% { transform: rotate(-1deg); } }
         .relic-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; cursor: pointer; user-select: none; transition: transform 0.2s ease, opacity 0.2s ease; touch-action: none; }
         .wiggle-mode .relic-wrapper:not(.is-dragging) { animation: wiggle 0.3s infinite ease-in-out; }
@@ -66,12 +61,26 @@
         .folder-text-entry { font-family: 'Cinzel', serif; font-size: 0.38rem; color: var(--gold); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-transform: uppercase; border-bottom: 0.5px solid rgba(140, 115, 64, 0.15); padding: 1px 0; line-height: 1; }
         .relic-name { margin-top: 1px; font-family: 'Cinzel'; font-size: 0.63rem; text-align: center; color: var(--gold); width: 100%; max-width: 64px; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
 
+        /* Time Calculator Widget Styles */
+        #time-widget {
+            background: rgba(5, 5, 5, 0.8); border: 1px solid var(--gold); padding: 20px;
+            width: 280px; font-family: 'Cinzel', serif; color: var(--gold);
+            box-shadow: 0 0 15px rgba(140, 115, 64, 0.1); margin: 40px auto; text-align: center;
+        }
+        .widget-title { font-size: 0.9rem; margin-bottom: 15px; border-bottom: 1px solid var(--crimson); padding-bottom: 5px; letter-spacing: 2px; }
+        .input-group { margin-bottom: 12px; text-align: left; }
+        .input-group label { display: block; font-size: 0.6rem; text-transform: uppercase; margin-bottom: 4px; color: var(--text); }
+        .time-input { background: #000; border: 1px solid #333; color: #fff; padding: 8px; width: 100%; box-sizing: border-box; font-family: 'Playfair Display', serif; }
+        #result-box { margin-top: 20px; padding: 10px; border: 1px dashed var(--crimson); background: rgba(122, 0, 0, 0.05); display: none; }
+        .departure-time { font-size: 1.5rem; color: #fff; display: block; margin-top: 5px; }
+        .calc-btn { background: var(--crimson); color: white; border: none; padding: 10px; width: 100%; cursor: pointer; font-family: 'Cinzel'; font-size: 0.75rem; }
+
+        /* Admin UI */
         #context-menu, #move-menu { display: none; position: fixed; z-index: 6000; background: #0a0a0a; border: 1px solid var(--gold); padding: 5px; min-width: 140px; }
         .menu-item { padding: 12px 20px; font-family: 'Cinzel'; font-size: 0.75rem; color: var(--gold); cursor: pointer; border-bottom: 1px solid #1a1a1a; }
         .menu-item:hover { background: var(--crimson); color: white; }
         #admin-desk { display: none; padding: 10px; gap: 4px; flex-direction: column; align-items: center; border: 1px solid var(--crimson); width: 250px; margin: 10px auto; background: #080808; }
         .toggle-btn { background: transparent; border: 1px solid var(--gold); color: var(--gold); cursor: pointer; padding: 8px 15px; font-family: 'Cinzel'; font-size: 0.7rem; }
-        input, select { background: #000; border: 1px solid #333; color: #fff; padding: 8px; width: 100%; box-sizing: border-box; margin-bottom: 5px;}
     </style>
 </head>
 <body>
@@ -87,14 +96,34 @@
     <div id="top-shield"></div>
 
     <section id="admin-desk">
-        <input type="text" id="r-name" placeholder="Name">
-        <input type="text" id="r-url" placeholder="URL">
-        <select id="r-type"><option value="link">Relic</option><option value="folder">Folder</option></select>
-        <input type="file" id="r-file" accept="image/*">
+        <input type="text" id="r-name" placeholder="Name" class="time-input" style="margin-bottom:5px;">
+        <input type="text" id="r-url" placeholder="URL" class="time-input" style="margin-bottom:5px;">
+        <select id="r-type" class="time-input" style="margin-bottom:5px;"><option value="link">Relic</option><option value="folder">Folder</option></select>
+        <input type="file" id="r-file" accept="image/*" class="time-input" style="margin-bottom:5px;">
         <button id="r-save" class="toggle-btn" style="background:var(--crimson); color:white; border:none; width:100%;">Commemorate</button>
     </section>
 
     <main id="archive-grid"></main>
+
+    <div id="time-widget">
+        <div class="widget-title">Departure Oracle</div>
+        <div class="input-group">
+            <label>Work Start Time</label>
+            <input type="time" id="work-start" class="time-input" value="09:00">
+        </div>
+        <div class="input-group">
+            <label>Journey Time (Min)</label>
+            <input type="number" id="travel-time" class="time-input" value="45">
+        </div>
+        <button class="calc-btn" onclick="calculateDeparture()">Calculate Oracle</button>
+        <div id="result-box">
+            <span style="font-size: 0.6rem; text-transform: uppercase;">Prep Ritual Begins:</span>
+            <span id="prep-time" class="departure-time" style="font-size: 1rem; color: var(--gold);">--:--</span>
+            <hr style="border: 0; border-top: 1px solid #333; margin: 10px 0;">
+            <span style="font-size: 0.6rem; text-transform: uppercase;">Leave For Journey:</span>
+            <span id="leave-time" class="departure-time">--:--</span>
+        </div>
+    </div>
 
     <div id="context-menu">
         <div class="menu-item" onclick="menuAction('edit')">Rename / Edit</div>
@@ -147,7 +176,6 @@
                 allRelics = snap.val() || {};
                 const grid = document.getElementById('archive-grid');
                 grid.innerHTML = '';
-                
                 const currentLevelItems = Object.keys(allRelics)
                     .filter(id => allRelics[id].parent === currentFolder)
                     .sort((a, b) => (allRelics[a].sortOrder || 0) - (allRelics[b].sortOrder || 0));
@@ -168,11 +196,9 @@
 
                     wrap.onpointerdown = (e) => {
                         if(!isEditMode) return;
-                        window.longPressed = false;
-                        startX = e.clientX; startY = e.clientY;
+                        window.longPressed = false; startX = e.clientX; startY = e.clientY;
                         window.pTimer = setTimeout(() => { window.longPressed = true; showContextMenu(e, id); }, 700);
-                        dragItem = wrap;
-                        wrap.setPointerCapture(e.pointerId);
+                        dragItem = wrap; wrap.setPointerCapture(e.pointerId);
                     };
 
                     wrap.onpointermove = (e) => {
@@ -222,6 +248,20 @@
             await rtdb.ref().update(updates);
         }
 
+        function calculateDeparture() {
+            const startTime = document.getElementById('work-start').value;
+            const travelMinutes = parseInt(document.getElementById('travel-time').value) || 0;
+            if (!startTime) return;
+            const [hours, minutes] = startTime.split(':').map(Number);
+            let date = new Date();
+            date.setHours(hours, minutes, 0, 0);
+            date.setMinutes(date.getMinutes() - travelMinutes);
+            document.getElementById('leave-time').innerText = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+            date.setMinutes(date.getMinutes() - 90);
+            document.getElementById('prep-time').innerText = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+            document.getElementById('result-box').style.display = 'block';
+        }
+
         function showContextMenu(e, id) {
             selectedRelicId = id;
             const menu = document.getElementById('context-menu');
@@ -231,7 +271,7 @@
         }
 
         window.menuAction = (type) => {
-            if (type === 'delete' && confirm("Are you sure you wish to purge this relic?")) rtdb.ref('relics/' + selectedRelicId).remove();
+            if (type === 'delete' && confirm("Purge this relic with confirmation?")) rtdb.ref('relics/' + selectedRelicId).remove();
             if (type === 'edit') {
                 const newName = prompt("Rename:", allRelics[selectedRelicId].name);
                 const newUrl = prompt("URL:", allRelics[selectedRelicId].url);
