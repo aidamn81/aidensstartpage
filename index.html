@@ -20,14 +20,9 @@
                               url('https://www.transparenttextures.com/patterns/dark-brick-wall.png');
             color: var(--text); font-family: 'Playfair Display', serif;
             margin: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center;
-            overflow-x: hidden; 
-            /* SCROLLING ENABLED BY DEFAULT */
-            overflow-y: auto; 
-            -webkit-overflow-scrolling: touch; 
-            padding-bottom: 100px;
+            overflow-x: hidden; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 100px;
         }
 
-        /* Prevent scrolling only during drag */
         body.is-dragging-active { overflow: hidden; touch-action: none; }
 
         #top-shield { width: 100%; height: calc(115px + env(safe-area-inset-top, 0px)); flex-shrink: 0; }
@@ -70,6 +65,7 @@
         .relic-wrapper.is-dragging { opacity: 0.8; transform: scale(1.2); z-index: 5000; position: fixed; pointer-events: none; }
         .relic-wrapper.placeholder { opacity: 0.1; }
 
+        /* Oracle Styles */
         #time-widget { background: rgba(5, 5, 5, 0.95); border: 1px solid var(--gold); padding: 20px; width: 310px; font-family: 'Cinzel', serif; color: var(--gold); box-shadow: 0 0 30px #000; margin: 40px auto; text-align: center; }
         #saved-shelf { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 15px; justify-content: center; }
         .dest-chip { background: #111; border: 1px solid var(--gold); color: var(--gold); padding: 5px 10px; font-size: 0.6rem; cursor: pointer; text-transform: uppercase; }
@@ -127,10 +123,16 @@
             <label style="font-size:0.5rem">Journey Minutes</label>
             <input type="number" id="travel-time" class="time-input" value="45">
         </div>
+        
+        <div style="font-size: 0.55rem; color: var(--gold); margin-bottom: 10px; border: 1px solid #1a1a1a; padding: 5px;">
+            Preparation Ritual: 1.5 Hours Included
+        </div>
+
         <span style="font-size:0.7rem; text-decoration:underline; cursor:pointer; display:block; margin:15px 0" onclick="openCitymapper()">Open in Citymapper App →</span>
         <button class="calc-btn" onclick="calculateOracle()">Consult Oracle</button>
+        
         <div id="result-box">
-            <span style="font-size:0.55rem; text-transform:uppercase;">Wake / Prepare:</span>
+            <span style="font-size:0.55rem; text-transform:uppercase;">Wake / Prepare (90m prior):</span>
             <span id="prep-time" class="departure-time" style="color:var(--gold);">--:--</span>
             <hr style="border:0; border-top:1px solid #333; margin:10px 0;">
             <span style="font-size:0.55rem; text-transform:uppercase;">Leave Home:</span>
@@ -197,7 +199,7 @@
                         if(!dragItem || window.longPressed) return;
                         if(Math.hypot(e.clientX - startX, e.clientY - startY) > 10) {
                             clearTimeout(window.pTimer);
-                            document.body.classList.add('is-dragging-active'); // DISABLE SCROLLING
+                            document.body.classList.add('is-dragging-active');
                             if(!ghostItem) {
                                 ghostItem = dragItem.cloneNode(true); ghostItem.classList.add('is-dragging');
                                 dragItem.classList.add('placeholder'); document.body.appendChild(ghostItem);
@@ -210,7 +212,7 @@
 
                     wrap.onpointerup = (e) => {
                         clearTimeout(window.pTimer);
-                        document.body.classList.remove('is-dragging-active'); // RE-ENABLE SCROLLING
+                        document.body.classList.remove('is-dragging-active');
                         if(ghostItem) { ghostItem.remove(); ghostItem = null; dragItem.classList.remove('placeholder'); }
                         else if(!window.longPressed) {
                             if(r.type === 'folder') enterFolder(id, r.name);
@@ -278,6 +280,7 @@
         }
         function executeMove(tid) { rtdb.ref('relics/'+selectedId).update({parent: tid}); document.getElementById('move-menu').style.display = 'none'; }
 
+        // --- UPDATED ORACLE CALCULATION ---
         async function openCitymapper() {
             const dest = document.getElementById('dest-address').value; if(!dest) return;
             try {
@@ -303,11 +306,24 @@
             });
         }
         function removeLoc(loc) { let s = JSON.parse(localStorage.getItem('gothic_dests')).filter(i => i !== loc); localStorage.setItem('gothic_dests', JSON.stringify(s)); renderSavedShelf(); }
+        
         function calculateOracle() {
-            const start = document.getElementById('work-start').value, travel = parseInt(document.getElementById('travel-time').value) || 0;
-            if(!start) return; const [h,m] = start.split(':').map(Number); let d = new Date(); d.setHours(h,m,0,0);
-            d.setMinutes(d.getMinutes() - travel); document.getElementById('leave-time').innerText = d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',hour12:false});
-            d.setMinutes(d.getMinutes() - 90); document.getElementById('prep-time').innerText = d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',hour12:false});
+            const start = document.getElementById('work-start').value;
+            const travel = parseInt(document.getElementById('travel-time').value) || 0;
+            if(!start) return;
+
+            const [h, m] = start.split(':').map(Number);
+            let d = new Date();
+            d.setHours(h, m, 0, 0);
+
+            // Subtract Travel Time to get "Leave Home"
+            d.setMinutes(d.getMinutes() - travel);
+            document.getElementById('leave-time').innerText = d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false});
+
+            // Subtract 90 minutes (1.5 hours) for "Wake/Prepare"
+            d.setMinutes(d.getMinutes() - 90);
+            document.getElementById('prep-time').innerText = d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false});
+
             document.getElementById('result-box').style.display = 'block';
         }
 
