@@ -39,7 +39,7 @@
             justify-content: center; align-items: start; position: relative;
         }
 
-        /* FIXED ADMIN DESK: Now floats so it doesn't push grid down */
+        /* Floating Admin Desk */
         #admin-desk { 
             display: none; position: fixed; bottom: 20px; right: 20px; 
             z-index: 4000; padding: 15px; gap: 8px; flex-direction: column; 
@@ -47,7 +47,7 @@
             box-shadow: 0 0 20px rgba(0,0,0,1);
         }
 
-        /* Relic Styling (Keeping your requested look) */
+        /* Relic Styling */
         .relic-wrapper { display: flex; flex-direction: column; align-items: center; position: relative; cursor: pointer; user-select: none; touch-action: none; }
         .relic-frame { width: 50px; height: 68px; position: relative; display: flex; align-items: center; justify-content: center; pointer-events: none; }
         .relic-frame::before {
@@ -60,13 +60,13 @@
         .folder-preview-text { font-family: 'Cinzel', serif; font-size: 0.35rem; color: var(--gold); text-align: center; white-space: nowrap; overflow: hidden; border-bottom: 0.5px solid rgba(140, 115, 64, 0.2); }
         .relic-name { margin-top: 2px; font-family: 'Cinzel'; font-size: 0.6rem; color: var(--gold); text-align: center; max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-        /* Drag/Wiggle Animations */
+        /* Drag/Wiggle */
         @keyframes wiggle { 0% { transform: rotate(-1.5deg); } 50% { transform: rotate(1.5deg); } 100% { transform: rotate(-1.5deg); } }
         .wiggle-mode .relic-wrapper:not(.is-dragging) { animation: wiggle 0.25s infinite; }
         .relic-wrapper.is-dragging { opacity: 0.8; transform: scale(1.2); z-index: 5000; position: fixed; pointer-events: none; }
         .relic-wrapper.placeholder { opacity: 0.1; }
 
-        /* Oracle Widget (Locked as requested) */
+        /* Oracle (Preserved) */
         #time-widget { background: rgba(5, 5, 5, 0.95); border: 1px solid var(--gold); padding: 20px; width: 310px; font-family: 'Cinzel', serif; color: var(--gold); box-shadow: 0 0 30px #000; margin: 40px auto; text-align: center; }
         #saved-shelf { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 15px; justify-content: center; }
         .dest-chip { background: #111; border: 1px solid var(--gold); color: var(--gold); padding: 5px 10px; font-size: 0.6rem; cursor: pointer; text-transform: uppercase; }
@@ -76,10 +76,10 @@
         #result-box { margin-top: 20px; padding: 15px; border: 1px dashed var(--crimson); background: rgba(122, 0, 0, 0.1); display: none; }
         .departure-time { font-size: 1.6rem; color: #fff; display: block; margin-top: 5px; }
 
-        /* FIXED CONTEXT MENU: Added max-height and auto-repositioning */
+        /* Improved Menus */
         #context-menu, #move-menu { 
             display: none; position: fixed; z-index: 6000; background: #0a0a0a; 
-            border: 1px solid var(--gold); padding: 5px; min-width: 150px; 
+            border: 1px solid var(--gold); padding: 5px; min-width: 160px; 
             max-height: 80vh; overflow-y: auto; box-shadow: 0 0 30px #000;
         }
         .menu-item { padding: 14px 20px; font-family: 'Cinzel'; font-size: 0.75rem; color: var(--gold); cursor: pointer; border-bottom: 1px solid #1a1a1a; }
@@ -110,6 +110,8 @@
 
     <main id="archive-grid"></main>
 
+    <input type="file" id="relic-update-file" accept="image/*" style="display:none">
+
     <div id="time-widget">
         <div class="widget-title">The Departure Oracle</div>
         <div id="saved-shelf"></div>
@@ -139,6 +141,7 @@
 
     <div id="context-menu">
         <div class="menu-item" onclick="menuAction('edit')">Rename / Edit</div>
+        <div class="menu-item" onclick="triggerImageUpdate()">Update Image</div>
         <div class="menu-item" onclick="showMoveMenu()">Move To...</div>
         <div class="menu-item" onclick="menuAction('delete')" style="color:var(--crimson);">Purge (Delete)</div>
     </div>
@@ -230,27 +233,30 @@
         function enterFolder(id, name) { currentFolder = id; document.getElementById('status-text').innerText = name; document.getElementById('back-btn').style.display = 'block'; loadRelics(); }
         function goBack() { currentFolder = 'root'; document.getElementById('status-text').innerText = "Gothic Archive"; document.getElementById('back-btn').style.display = 'none'; loadRelics(); }
 
-        // --- FIXED MENU PLACEMENT LOGIC ---
+        // --- IMAGE UPDATE ENGINE ---
+        function triggerImageUpdate() {
+            document.getElementById('relic-update-file').click();
+            document.getElementById('context-menu').style.display = 'none';
+        }
+
+        document.getElementById('relic-update-file').onchange = (e) => {
+            const file = e.target.files[0];
+            if(!file || !selectedId) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                rtdb.ref('relics/' + selectedId).update({ imgUrl: ev.target.result });
+            };
+            reader.readAsDataURL(file);
+        };
+
+        // --- MENUS ---
         function showContextMenu(e, id) {
             selectedId = id; const menu = document.getElementById('context-menu');
             menu.style.display = 'block';
-            
-            let posX = e.clientX;
-            let posY = e.clientY;
-
-            // Flip menu if it would go off the bottom of the screen
-            const menuHeight = 200; // estimated
-            if (posY + menuHeight > window.innerHeight) {
-                posY = posY - menuHeight;
-            }
-            
-            // Push menu left if it would go off the right
-            if (posX + 150 > window.innerWidth) {
-                posX = window.innerWidth - 160;
-            }
-
-            menu.style.left = posX + 'px';
-            menu.style.top = posY + 'px';
+            let posX = e.clientX, posY = e.clientY;
+            if (posY + 250 > window.innerHeight) posY = posY - 250;
+            if (posX + 160 > window.innerWidth) posX = window.innerWidth - 170;
+            menu.style.left = posX + 'px'; menu.style.top = posY + 'px';
         }
 
         document.getElementById('edit-toggle').onclick = (e) => {
@@ -290,7 +296,7 @@
         }
         function executeMove(tid) { rtdb.ref('relics/'+selectedId).update({parent: tid}); document.getElementById('move-menu').style.display = 'none'; }
 
-        // --- ORACLE (UNTOUCHED) ---
+        // --- ORACLE (PRESERVED) ---
         async function openCitymapper() {
             const dest = document.getElementById('dest-address').value; if(!dest) return;
             try {
