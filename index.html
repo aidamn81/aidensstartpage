@@ -20,8 +20,15 @@
                               url('https://www.transparenttextures.com/patterns/dark-brick-wall.png');
             color: var(--text); font-family: 'Playfair Display', serif;
             margin: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center;
-            overflow-x: hidden; touch-action: none; padding-bottom: 20px;
+            overflow-x: hidden; 
+            /* SCROLLING ENABLED BY DEFAULT */
+            overflow-y: auto; 
+            -webkit-overflow-scrolling: touch; 
+            padding-bottom: 100px;
         }
+
+        /* Prevent scrolling only during drag */
+        body.is-dragging-active { overflow: hidden; touch-action: none; }
 
         #top-shield { width: 100%; height: calc(115px + env(safe-area-inset-top, 0px)); flex-shrink: 0; }
 
@@ -39,7 +46,6 @@
             justify-content: center; align-items: start; position: relative;
         }
 
-        /* Floating Admin Desk */
         #admin-desk { 
             display: none; position: fixed; bottom: 20px; right: 20px; 
             z-index: 4000; padding: 15px; gap: 8px; flex-direction: column; 
@@ -47,8 +53,7 @@
             box-shadow: 0 0 20px rgba(0,0,0,1);
         }
 
-        /* Relic Styling */
-        .relic-wrapper { display: flex; flex-direction: column; align-items: center; position: relative; cursor: pointer; user-select: none; touch-action: none; }
+        .relic-wrapper { display: flex; flex-direction: column; align-items: center; position: relative; cursor: pointer; user-select: none; }
         .relic-frame { width: 50px; height: 68px; position: relative; display: flex; align-items: center; justify-content: center; pointer-events: none; }
         .relic-frame::before {
             content: ""; position: absolute; top: -6px; left: -6px; right: -6px; bottom: -6px;
@@ -60,13 +65,11 @@
         .folder-preview-text { font-family: 'Cinzel', serif; font-size: 0.35rem; color: var(--gold); text-align: center; white-space: nowrap; overflow: hidden; border-bottom: 0.5px solid rgba(140, 115, 64, 0.2); }
         .relic-name { margin-top: 2px; font-family: 'Cinzel'; font-size: 0.6rem; color: var(--gold); text-align: center; max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-        /* Drag/Wiggle */
         @keyframes wiggle { 0% { transform: rotate(-1.5deg); } 50% { transform: rotate(1.5deg); } 100% { transform: rotate(-1.5deg); } }
         .wiggle-mode .relic-wrapper:not(.is-dragging) { animation: wiggle 0.25s infinite; }
         .relic-wrapper.is-dragging { opacity: 0.8; transform: scale(1.2); z-index: 5000; position: fixed; pointer-events: none; }
         .relic-wrapper.placeholder { opacity: 0.1; }
 
-        /* Oracle (Preserved) */
         #time-widget { background: rgba(5, 5, 5, 0.95); border: 1px solid var(--gold); padding: 20px; width: 310px; font-family: 'Cinzel', serif; color: var(--gold); box-shadow: 0 0 30px #000; margin: 40px auto; text-align: center; }
         #saved-shelf { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 15px; justify-content: center; }
         .dest-chip { background: #111; border: 1px solid var(--gold); color: var(--gold); padding: 5px 10px; font-size: 0.6rem; cursor: pointer; text-transform: uppercase; }
@@ -76,14 +79,12 @@
         #result-box { margin-top: 20px; padding: 15px; border: 1px dashed var(--crimson); background: rgba(122, 0, 0, 0.1); display: none; }
         .departure-time { font-size: 1.6rem; color: #fff; display: block; margin-top: 5px; }
 
-        /* Improved Menus */
         #context-menu, #move-menu { 
             display: none; position: fixed; z-index: 6000; background: #0a0a0a; 
             border: 1px solid var(--gold); padding: 5px; min-width: 160px; 
             max-height: 80vh; overflow-y: auto; box-shadow: 0 0 30px #000;
         }
         .menu-item { padding: 14px 20px; font-family: 'Cinzel'; font-size: 0.75rem; color: var(--gold); cursor: pointer; border-bottom: 1px solid #1a1a1a; }
-        .menu-item:hover { background: var(--crimson); color: white; }
         .toggle-btn { background: transparent; border: 1px solid var(--gold); color: var(--gold); padding: 8px 15px; font-family: 'Cinzel'; font-size: 0.7rem; cursor: pointer; }
     </style>
 </head>
@@ -100,7 +101,6 @@
     <div id="top-shield"></div>
 
     <section id="admin-desk">
-        <div style="font-family:'Cinzel'; font-size:0.6rem; border-bottom: 1px solid var(--gold); padding-bottom:5px; margin-bottom:5px;">Add New Item</div>
         <input type="text" id="r-name" placeholder="Name" class="time-input">
         <input type="text" id="r-url" placeholder="URL" class="time-input">
         <select id="r-type" class="time-input"><option value="link">Relic (Link)</option><option value="folder">Folder</option></select>
@@ -109,7 +109,6 @@
     </section>
 
     <main id="archive-grid"></main>
-
     <input type="file" id="relic-update-file" accept="image/*" style="display:none">
 
     <div id="time-widget">
@@ -198,6 +197,7 @@
                         if(!dragItem || window.longPressed) return;
                         if(Math.hypot(e.clientX - startX, e.clientY - startY) > 10) {
                             clearTimeout(window.pTimer);
+                            document.body.classList.add('is-dragging-active'); // DISABLE SCROLLING
                             if(!ghostItem) {
                                 ghostItem = dragItem.cloneNode(true); ghostItem.classList.add('is-dragging');
                                 dragItem.classList.add('placeholder'); document.body.appendChild(ghostItem);
@@ -210,6 +210,7 @@
 
                     wrap.onpointerup = (e) => {
                         clearTimeout(window.pTimer);
+                        document.body.classList.remove('is-dragging-active'); // RE-ENABLE SCROLLING
                         if(ghostItem) { ghostItem.remove(); ghostItem = null; dragItem.classList.remove('placeholder'); }
                         else if(!window.longPressed) {
                             if(r.type === 'folder') enterFolder(id, r.name);
@@ -233,23 +234,13 @@
         function enterFolder(id, name) { currentFolder = id; document.getElementById('status-text').innerText = name; document.getElementById('back-btn').style.display = 'block'; loadRelics(); }
         function goBack() { currentFolder = 'root'; document.getElementById('status-text').innerText = "Gothic Archive"; document.getElementById('back-btn').style.display = 'none'; loadRelics(); }
 
-        // --- IMAGE UPDATE ENGINE ---
-        function triggerImageUpdate() {
-            document.getElementById('relic-update-file').click();
-            document.getElementById('context-menu').style.display = 'none';
-        }
-
+        function triggerImageUpdate() { document.getElementById('relic-update-file').click(); document.getElementById('context-menu').style.display = 'none'; }
         document.getElementById('relic-update-file').onchange = (e) => {
-            const file = e.target.files[0];
-            if(!file || !selectedId) return;
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                rtdb.ref('relics/' + selectedId).update({ imgUrl: ev.target.result });
-            };
+            const file = e.target.files[0]; if(!file || !selectedId) return;
+            const reader = new FileReader(); reader.onload = (ev) => { rtdb.ref('relics/' + selectedId).update({ imgUrl: ev.target.result }); };
             reader.readAsDataURL(file);
         };
 
-        // --- MENUS ---
         function showContextMenu(e, id) {
             selectedId = id; const menu = document.getElementById('context-menu');
             menu.style.display = 'block';
@@ -260,8 +251,7 @@
         }
 
         document.getElementById('edit-toggle').onclick = (e) => {
-            isEditMode = !isEditMode;
-            document.body.classList.toggle('wiggle-mode', isEditMode);
+            isEditMode = !isEditMode; document.body.classList.toggle('wiggle-mode', isEditMode);
             e.target.innerText = isEditMode ? "Lock Archive" : "Edit Mode";
             document.getElementById('admin-desk').style.display = isEditMode ? 'flex' : 'none';
             if(isEditMode && !auth.currentUser) auth.signInAnonymously();
@@ -270,33 +260,24 @@
         document.getElementById('r-save').onclick = async () => {
             const n = document.getElementById('r-name').value, u = document.getElementById('r-url').value, t = document.getElementById('r-type').value, f = document.getElementById('r-file').files[0];
             if(!n) return;
-            const push = (img) => {
-                rtdb.ref('relics').push({ name: n, url: u, type: t, imgUrl: img || '', parent: currentFolder, sortOrder: 999 });
-                document.getElementById('r-name').value = ''; document.getElementById('r-url').value = '';
-            };
+            const push = (img) => { rtdb.ref('relics').push({ name: n, url: u, type: t, imgUrl: img || '', parent: currentFolder, sortOrder: 999 }); document.getElementById('r-name').value = ''; document.getElementById('r-url').value = ''; };
             if(f) { const r = new FileReader(); r.onload = (e) => push(e.target.result); r.readAsDataURL(f); } else push("");
         };
 
         function menuAction(action) {
             if(action === 'delete' && confirm("Purge this relic?")) rtdb.ref('relics/'+selectedId).remove();
-            if(action === 'edit') {
-                const n = prompt("New Name:", allRelics[selectedId].name);
-                if(n) rtdb.ref('relics/'+selectedId).update({name: n});
-            }
+            if(action === 'edit') { const n = prompt("New Name:", allRelics[selectedId].name); if(n) rtdb.ref('relics/'+selectedId).update({name: n}); }
             document.getElementById('context-menu').style.display = 'none';
         }
 
         function showMoveMenu() {
             const m = document.getElementById('move-menu'); m.innerHTML = '<div class="menu-item" onclick="executeMove(\'root\')">Move to Root</div>';
             Object.keys(allRelics).forEach(id => { if(allRelics[id].type === 'folder' && id !== selectedId) m.innerHTML += `<div class="menu-item" onclick="executeMove('${id}')">Move to ${allRelics[id].name}</div>`; });
-            m.style.display = 'block'; 
-            m.style.left = document.getElementById('context-menu').style.left; 
-            m.style.top = document.getElementById('context-menu').style.top;
+            m.style.display = 'block'; m.style.left = document.getElementById('context-menu').style.left; m.style.top = document.getElementById('context-menu').style.top;
             document.getElementById('context-menu').style.display = 'none';
         }
         function executeMove(tid) { rtdb.ref('relics/'+selectedId).update({parent: tid}); document.getElementById('move-menu').style.display = 'none'; }
 
-        // --- ORACLE (PRESERVED) ---
         async function openCitymapper() {
             const dest = document.getElementById('dest-address').value; if(!dest) return;
             try {
