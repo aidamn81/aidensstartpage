@@ -39,7 +39,6 @@
             justify-content: center; align-items: start; position: relative;
         }
 
-        /* Combined Widget Container */
         #tools-nexus {
             display: flex; flex-wrap: wrap; gap: 20px; justify-content: center;
             width: 95%; max-width: 800px; margin: 40px auto;
@@ -52,6 +51,8 @@
             flex-grow: 1;
         }
 
+        #saved-shelf { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 15px; justify-content: center; }
+        .dest-chip { background: #111; border: 1px solid var(--gold); color: var(--gold); padding: 5px 10px; font-size: 0.6rem; cursor: pointer; text-transform: uppercase; }
         .input-group { margin-bottom: 12px; text-align: left; }
         .time-input { background: #000; border: 1px solid #333; color: #fff; padding: 12px; width: 100%; box-sizing: border-box; font-family: 'Playfair Display', serif; font-size: 0.9rem; }
         .calc-btn { background: var(--crimson); color: white; border: none; padding: 12px; width: 100%; cursor: pointer; font-family: 'Cinzel'; font-size: 0.75rem; margin-top: 10px; }
@@ -113,9 +114,15 @@
     <div id="tools-nexus">
         <div id="time-widget" class="ritual-tool">
             <div class="widget-title" style="margin-bottom:15px;">Departure Oracle</div>
+            <div id="saved-shelf"></div>
             <div class="input-group">
                 <label style="font-size:0.5rem">Work Start Time</label>
                 <input type="time" id="work-start" class="time-input" value="09:00">
+            </div>
+            <div class="input-group">
+                <label style="font-size:0.5rem">Destination Postcode</label>
+                <input type="text" id="dest-address" class="time-input" placeholder="e.g. SE1 7PB">
+                <button class="toggle-btn" style="width:100%; margin-top:5px; font-size:0.5rem" onclick="addSavedLocation()">+ Save to Shelf</button>
             </div>
             <div class="input-group">
                 <label style="font-size:0.5rem">Journey Minutes</label>
@@ -124,6 +131,7 @@
             <div style="font-size: 0.55rem; color: var(--gold); margin-bottom: 10px; border: 1px solid #1a1a1a; padding: 5px;">
                 Arrival Ritual: 1.5 Hours Setup Included
             </div>
+            <span style="font-size:0.7rem; text-decoration:underline; cursor:pointer; display:block; margin:15px 0" onclick="openCitymapper()">Open Citymapper App →</span>
             <button class="calc-btn" onclick="calculateOracle()">Consult Oracle</button>
             <div id="result-box" class="result-panel">
                 <span style="font-size:0.55rem; text-transform:uppercase;">Leave Home:</span>
@@ -180,8 +188,9 @@
         let isEditMode = false, selectedId = null, currentFolder = 'root', allRelics = {};
         let dragItem = null, ghostItem = null, startX, startY;
 
-        window.onload = () => { loadRelics(); };
+        window.onload = () => { loadRelics(); renderSavedShelf(); };
 
+        // RELIC GRID (Folders Fixed: Immediate Tap vs Hold Drag)
         function loadRelics() {
             rtdb.ref('relics').on('value', snap => {
                 allRelics = snap.val() || {};
@@ -234,19 +243,52 @@
             });
         }
 
+        // DEPARTURE ORACLE (90m Arrival Ritual Logic)
         function calculateOracle() {
             const start = document.getElementById('work-start').value;
             const travel = parseInt(document.getElementById('travel-time').value) || 0;
             if(!start) return;
             const [h, m] = start.split(':').map(Number);
             let workTime = new Date(); workTime.setHours(h, m, 0, 0);
-            let arrivalTime = new Date(workTime.getTime() - (90 * 60000));
+            let arrivalTime = new Date(workTime.getTime() - (90 * 60000)); // 1.5hr ritual
             document.getElementById('prep-time').innerText = arrivalTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false});
-            let leaveTime = new Date(arrivalTime.getTime() - (travel * 60000));
+            let leaveTime = new Date(arrivalTime.getTime() - (travel * 60000)); // Subtract journey
             document.getElementById('leave-time').innerText = leaveTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false});
             document.getElementById('result-box').style.display = 'block';
         }
 
+        // CITYMAPPER & SAVED LOCATIONS
+        async function openCitymapper() {
+            const dest = document.getElementById('dest-address').value; if(!dest) return;
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(dest)}`);
+                const data = await res.json();
+                const url = data.length > 0 ? `citymapper://directions?endcoord=${data[0].lat},${data[0].lon}&endname=${encodeURIComponent(dest)}` : `citymapper://directions?endaddress=${encodeURIComponent(dest)}`;
+                window.location.href = url;
+            } catch(e) { window.location.href = `citymapper://directions?endaddress=${encodeURIComponent(dest)}`; }
+        }
+        function addSavedLocation() {
+            const dest = document.getElementById('dest-address').value; if(!dest) return;
+            let saved = JSON.parse(localStorage.getItem('gothic_dests') || '[]');
+            if(!saved.includes(dest)) { saved.push(dest); localStorage.setItem('gothic_dests', JSON.stringify(saved)); renderSavedShelf(); }
+        }
+        function renderSavedShelf() {
+            const shelf = document.getElementById('saved-shelf'); shelf.innerHTML = '';
+            const saved = JSON.parse(localStorage.getItem('gothic_dests') || '[]');
+            saved.forEach(loc => {
+                const chip = document.createElement('div'); chip.className = 'dest-chip'; chip.innerText = loc;
+                chip.onclick = () => document.getElementById('dest-address').value = loc;
+                chip.oncontextmenu = (e) => { e.preventDefault(); removeLoc(loc); };
+                shelf.appendChild(chip);
+            });
+        }
+        function removeLoc(loc) { 
+            let s = JSON.parse(localStorage.getItem('gothic_dests')).filter(i => i !== loc); 
+            localStorage.setItem('gothic_dests', JSON.stringify(s)); 
+            renderSavedShelf(); 
+        }
+
+        // PERCENTAGE RELIC
         function calculatePerc() {
             const val = parseFloat(document.getElementById('perc-val').value) || 0;
             const perc = parseFloat(document.getElementById('perc-num').value) || 0;
@@ -255,6 +297,7 @@
             document.getElementById('perc-result-box').style.display = 'block';
         }
 
+        // SYSTEM HELPERS
         async function reorder(sid, tid) {
             const siblings = Object.keys(allRelics).filter(id => allRelics[id].parent === currentFolder).sort((a,b) => (allRelics[a].sortOrder||0)-(allRelics[b].sortOrder||0));
             const from = siblings.indexOf(sid), to = siblings.indexOf(tid);
