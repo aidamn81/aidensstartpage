@@ -39,6 +39,25 @@
             justify-content: center; align-items: start; position: relative;
         }
 
+        /* Combined Widget Container */
+        #tools-nexus {
+            display: flex; flex-wrap: wrap; gap: 20px; justify-content: center;
+            width: 95%; max-width: 800px; margin: 40px auto;
+        }
+
+        .ritual-tool { 
+            background: rgba(5, 5, 5, 0.95); border: 1px solid var(--gold); 
+            padding: 20px; width: 310px; font-family: 'Cinzel', serif; 
+            color: var(--gold); box-shadow: 0 0 30px #000; text-align: center;
+            flex-grow: 1;
+        }
+
+        .input-group { margin-bottom: 12px; text-align: left; }
+        .time-input { background: #000; border: 1px solid #333; color: #fff; padding: 12px; width: 100%; box-sizing: border-box; font-family: 'Playfair Display', serif; font-size: 0.9rem; }
+        .calc-btn { background: var(--crimson); color: white; border: none; padding: 12px; width: 100%; cursor: pointer; font-family: 'Cinzel'; font-size: 0.75rem; margin-top: 10px; }
+        .result-panel { margin-top: 15px; padding: 10px; border: 1px dashed var(--crimson); background: rgba(122, 0, 0, 0.1); display: none; }
+        .departure-time { font-size: 1.6rem; color: #fff; display: block; margin-top: 5px; }
+
         #admin-desk { 
             display: none; position: fixed; bottom: 20px; right: 20px; 
             z-index: 4000; padding: 15px; gap: 8px; flex-direction: column; 
@@ -63,20 +82,9 @@
         .relic-wrapper.is-dragging { opacity: 0.8; transform: scale(1.2); z-index: 5000; position: fixed; pointer-events: none; }
         .relic-wrapper.placeholder { opacity: 0.1; }
 
-        #time-widget { background: rgba(5, 5, 5, 0.95); border: 1px solid var(--gold); padding: 20px; width: 310px; font-family: 'Cinzel', serif; color: var(--gold); box-shadow: 0 0 30px #000; margin: 40px auto; text-align: center; }
-        #saved-shelf { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 15px; justify-content: center; }
-        .dest-chip { background: #111; border: 1px solid var(--gold); color: var(--gold); padding: 5px 10px; font-size: 0.6rem; cursor: pointer; text-transform: uppercase; }
-        .input-group { margin-bottom: 12px; text-align: left; }
-        .time-input { background: #000; border: 1px solid #333; color: #fff; padding: 12px; width: 100%; box-sizing: border-box; font-family: 'Playfair Display', serif; font-size: 0.9rem; }
-        .calc-btn { background: var(--crimson); color: white; border: none; padding: 12px; width: 100%; cursor: pointer; font-family: 'Cinzel'; font-size: 0.75rem; margin-top: 10px; }
-        #result-box, #perc-result-box { margin-top: 15px; padding: 10px; border: 1px dashed var(--crimson); background: rgba(122, 0, 0, 0.1); display: none; }
-        .departure-time { font-size: 1.6rem; color: #fff; display: block; margin-top: 5px; }
-
         #context-menu, #move-menu { display: none; position: fixed; z-index: 6000; background: #0a0a0a; border: 1px solid var(--gold); padding: 5px; min-width: 160px; max-height: 80vh; overflow-y: auto; box-shadow: 0 0 30px #000; }
         .menu-item { padding: 14px 20px; font-family: 'Cinzel'; font-size: 0.75rem; color: var(--gold); cursor: pointer; border-bottom: 1px solid #1a1a1a; }
         .toggle-btn { background: transparent; border: 1px solid var(--gold); color: var(--gold); padding: 8px 15px; font-family: 'Cinzel'; font-size: 0.7rem; cursor: pointer; }
-
-        .perc-calc-area { border-top: 1px solid #333; margin-top: 25px; padding-top: 20px; }
     </style>
 </head>
 <body>
@@ -102,43 +110,45 @@
     <main id="archive-grid"></main>
     <input type="file" id="relic-update-file" accept="image/*" style="display:none">
 
-    <div id="time-widget">
-        <div class="widget-title" style="margin-bottom:15px;">Departure Oracle</div>
-        <div id="saved-shelf"></div>
-        <div class="input-group">
-            <label style="font-size:0.5rem">Work Start Time</label>
-            <input type="time" id="work-start" class="time-input" value="09:00">
-        </div>
-        <div class="input-group">
-            <label style="font-size:0.5rem">Journey Minutes</label>
-            <input type="number" id="travel-time" class="time-input" value="45">
-        </div>
-        <div style="font-size: 0.55rem; color: var(--gold); margin-bottom: 10px; border: 1px solid #1a1a1a; padding: 5px;">
-            Arrival Ritual: 1.5 Hours Setup Included
-        </div>
-        <button class="calc-btn" onclick="calculateOracle()">Consult Oracle</button>
-        <div id="result-box">
-            <span style="font-size:0.55rem; text-transform:uppercase;">Leave Home:</span>
-            <span id="leave-time" class="departure-time" style="color:var(--gold);">--:--</span>
-            <hr style="border:0; border-top:1px solid #333; margin:10px 0;">
-            <span style="font-size:0.55rem; text-transform:uppercase;">Arrive at Destination:</span>
-            <span id="prep-time" class="departure-time">--:--</span>
+    <div id="tools-nexus">
+        <div id="time-widget" class="ritual-tool">
+            <div class="widget-title" style="margin-bottom:15px;">Departure Oracle</div>
+            <div class="input-group">
+                <label style="font-size:0.5rem">Work Start Time</label>
+                <input type="time" id="work-start" class="time-input" value="09:00">
+            </div>
+            <div class="input-group">
+                <label style="font-size:0.5rem">Journey Minutes</label>
+                <input type="number" id="travel-time" class="time-input" value="45">
+            </div>
+            <div style="font-size: 0.55rem; color: var(--gold); margin-bottom: 10px; border: 1px solid #1a1a1a; padding: 5px;">
+                Arrival Ritual: 1.5 Hours Setup Included
+            </div>
+            <button class="calc-btn" onclick="calculateOracle()">Consult Oracle</button>
+            <div id="result-box" class="result-panel">
+                <span style="font-size:0.55rem; text-transform:uppercase;">Leave Home:</span>
+                <span id="leave-time" class="departure-time" style="color:var(--gold);">--:--</span>
+                <hr style="border:0; border-top:1px solid #333; margin:10px 0;">
+                <span style="font-size:0.55rem; text-transform:uppercase;">Arrive at Destination:</span>
+                <span id="prep-time" class="departure-time">--:--</span>
+            </div>
         </div>
 
-        <div class="perc-calc-area">
-            <div class="widget-title" style="font-size:0.7rem; margin-bottom:15px;">Percentage Relic</div>
-            <div style="display:flex; gap:10px; align-items:flex-end;">
-                <div class="input-group" style="flex:1;">
-                    <label style="font-size:0.5rem">Number</label>
-                    <input type="number" id="perc-val" class="time-input" placeholder="e.g. 250">
-                </div>
-                <div class="input-group" style="width:70px;">
-                    <label style="font-size:0.5rem">Percent (%)</label>
-                    <input type="number" id="perc-num" class="time-input" value="20">
-                </div>
+        <div id="perc-widget" class="ritual-tool">
+            <div class="widget-title" style="margin-bottom:15px;">Percentage Relic</div>
+            <div class="input-group">
+                <label style="font-size:0.5rem">Base Number</label>
+                <input type="number" id="perc-val" class="time-input" placeholder="e.g. 250">
+            </div>
+            <div class="input-group">
+                <label style="font-size:0.5rem">Percent (%)</label>
+                <input type="number" id="perc-num" class="time-input" value="20">
+            </div>
+            <div style="font-size: 0.55rem; color: var(--gold); margin-bottom: 10px; border: 1px solid #1a1a1a; padding: 5px;">
+                Material & Distance Calculation
             </div>
             <button class="calc-btn" style="background:#333;" onclick="calculatePerc()">Solve Ritual</button>
-            <div id="perc-result-box">
+            <div id="perc-result-box" class="result-panel">
                 <span style="font-size:0.55rem; text-transform:uppercase;">Result:</span>
                 <span id="perc-total" class="departure-time" style="color:var(--gold); font-size:1.2rem;">0</span>
             </div>
@@ -170,9 +180,8 @@
         let isEditMode = false, selectedId = null, currentFolder = 'root', allRelics = {};
         let dragItem = null, ghostItem = null, startX, startY;
 
-        window.onload = () => { loadRelics(); renderSavedShelf(); };
+        window.onload = () => { loadRelics(); };
 
-        // RELIC GRID LOGIC (Folders Fixed)
         function loadRelics() {
             rtdb.ref('relics').on('value', snap => {
                 allRelics = snap.val() || {};
@@ -225,7 +234,6 @@
             });
         }
 
-        // ORACLE LOGIC (90m Arrival Prep Fixed)
         function calculateOracle() {
             const start = document.getElementById('work-start').value;
             const travel = parseInt(document.getElementById('travel-time').value) || 0;
@@ -239,7 +247,6 @@
             document.getElementById('result-box').style.display = 'block';
         }
 
-        // PERCENTAGE LOGIC
         function calculatePerc() {
             const val = parseFloat(document.getElementById('perc-val').value) || 0;
             const perc = parseFloat(document.getElementById('perc-num').value) || 0;
@@ -248,7 +255,6 @@
             document.getElementById('perc-result-box').style.display = 'block';
         }
 
-        // FOLDER & ADMIN HELPERS (Preserved)
         async function reorder(sid, tid) {
             const siblings = Object.keys(allRelics).filter(id => allRelics[id].parent === currentFolder).sort((a,b) => (allRelics[a].sortOrder||0)-(allRelics[b].sortOrder||0));
             const from = siblings.indexOf(sid), to = siblings.indexOf(tid);
@@ -295,16 +301,6 @@
             document.getElementById('context-menu').style.display = 'none';
         }
         function executeMove(tid) { rtdb.ref('relics/'+selectedId).update({parent: tid}); document.getElementById('move-menu').style.display = 'none'; }
-        function renderSavedShelf() {
-            const shelf = document.getElementById('saved-shelf'); shelf.innerHTML = '';
-            const saved = JSON.parse(localStorage.getItem('gothic_dests') || '[]');
-            saved.forEach(loc => {
-                const chip = document.createElement('div'); chip.className = 'dest-chip'; chip.innerText = loc;
-                chip.onclick = () => document.getElementById('dest-address').value = loc;
-                chip.oncontextmenu = (e) => { e.preventDefault(); removeLoc(loc); };
-                shelf.appendChild(chip);
-            });
-        }
         window.onclick = (e) => { if(!e.target.closest('.menu-item')) { document.getElementById('context-menu').style.display='none'; document.getElementById('move-menu').style.display='none'; } };
     </script>
 </body>
