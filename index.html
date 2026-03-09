@@ -24,9 +24,7 @@
         }
 
         body.is-dragging-active { overflow: hidden; touch-action: none; }
-
         #top-shield { width: 100%; height: calc(115px + env(safe-area-inset-top, 0px)); flex-shrink: 0; }
-
         #top-controls { 
             width: 100%; padding: 15px 20px; display: flex; justify-content: space-between; 
             align-items: center; border-bottom: 1px solid #1a1a1a; background: #000; 
@@ -71,12 +69,14 @@
         .input-group { margin-bottom: 12px; text-align: left; }
         .time-input { background: #000; border: 1px solid #333; color: #fff; padding: 12px; width: 100%; box-sizing: border-box; font-family: 'Playfair Display', serif; font-size: 0.9rem; }
         .calc-btn { background: var(--crimson); color: white; border: none; padding: 12px; width: 100%; cursor: pointer; font-family: 'Cinzel'; font-size: 0.75rem; margin-top: 10px; }
-        #result-box { margin-top: 20px; padding: 15px; border: 1px dashed var(--crimson); background: rgba(122, 0, 0, 0.1); display: none; }
+        #result-box, #perc-result-box { margin-top: 15px; padding: 10px; border: 1px dashed var(--crimson); background: rgba(122, 0, 0, 0.1); display: none; }
         .departure-time { font-size: 1.6rem; color: #fff; display: block; margin-top: 5px; }
 
         #context-menu, #move-menu { display: none; position: fixed; z-index: 6000; background: #0a0a0a; border: 1px solid var(--gold); padding: 5px; min-width: 160px; max-height: 80vh; overflow-y: auto; box-shadow: 0 0 30px #000; }
         .menu-item { padding: 14px 20px; font-family: 'Cinzel'; font-size: 0.75rem; color: var(--gold); cursor: pointer; border-bottom: 1px solid #1a1a1a; }
         .toggle-btn { background: transparent; border: 1px solid var(--gold); color: var(--gold); padding: 8px 15px; font-family: 'Cinzel'; font-size: 0.7rem; cursor: pointer; }
+
+        .perc-calc-area { border-top: 1px solid #333; margin-top: 25px; padding-top: 20px; }
     </style>
 </head>
 <body>
@@ -103,36 +103,45 @@
     <input type="file" id="relic-update-file" accept="image/*" style="display:none">
 
     <div id="time-widget">
-        <div class="widget-title">The Departure Oracle</div>
+        <div class="widget-title" style="margin-bottom:15px;">Departure Oracle</div>
         <div id="saved-shelf"></div>
         <div class="input-group">
             <label style="font-size:0.5rem">Work Start Time</label>
             <input type="time" id="work-start" class="time-input" value="09:00">
         </div>
         <div class="input-group">
-            <label style="font-size:0.5rem">Destination Postcode</label>
-            <input type="text" id="dest-address" class="time-input" placeholder="e.g. SE1 7PB">
-            <button class="toggle-btn" style="width:100%; margin-top:5px; font-size:0.5rem" onclick="addSavedLocation()">+ Save to Shelf</button>
-        </div>
-        <div class="input-group">
             <label style="font-size:0.5rem">Journey Minutes</label>
             <input type="number" id="travel-time" class="time-input" value="45">
         </div>
-        
         <div style="font-size: 0.55rem; color: var(--gold); margin-bottom: 10px; border: 1px solid #1a1a1a; padding: 5px;">
-            Arrival Ritual: 1.5 Hours Setup at Destination
+            Arrival Ritual: 1.5 Hours Setup Included
         </div>
-
-        <span style="font-size:0.7rem; text-decoration:underline; cursor:pointer; display:block; margin:15px 0" onclick="openCitymapper()">Open in Citymapper App →</span>
         <button class="calc-btn" onclick="calculateOracle()">Consult Oracle</button>
-        
         <div id="result-box">
             <span style="font-size:0.55rem; text-transform:uppercase;">Leave Home:</span>
             <span id="leave-time" class="departure-time" style="color:var(--gold);">--:--</span>
             <hr style="border:0; border-top:1px solid #333; margin:10px 0;">
             <span style="font-size:0.55rem; text-transform:uppercase;">Arrive at Destination:</span>
             <span id="prep-time" class="departure-time">--:--</span>
-            <p style="font-size:0.45rem; opacity:0.7;">(To begin 90m prep before work starts)</p>
+        </div>
+
+        <div class="perc-calc-area">
+            <div class="widget-title" style="font-size:0.7rem; margin-bottom:15px;">Percentage Relic</div>
+            <div style="display:flex; gap:10px; align-items:flex-end;">
+                <div class="input-group" style="flex:1;">
+                    <label style="font-size:0.5rem">Number</label>
+                    <input type="number" id="perc-val" class="time-input" placeholder="e.g. 250">
+                </div>
+                <div class="input-group" style="width:70px;">
+                    <label style="font-size:0.5rem">Percent (%)</label>
+                    <input type="number" id="perc-num" class="time-input" value="20">
+                </div>
+            </div>
+            <button class="calc-btn" style="background:#333;" onclick="calculatePerc()">Solve Ritual</button>
+            <div id="perc-result-box">
+                <span style="font-size:0.55rem; text-transform:uppercase;">Result:</span>
+                <span id="perc-total" class="departure-time" style="color:var(--gold); font-size:1.2rem;">0</span>
+            </div>
         </div>
     </div>
 
@@ -163,6 +172,7 @@
 
         window.onload = () => { loadRelics(); renderSavedShelf(); };
 
+        // RELIC GRID LOGIC (Folders Fixed)
         function loadRelics() {
             rtdb.ref('relics').on('value', snap => {
                 allRelics = snap.val() || {};
@@ -180,7 +190,6 @@
                     } else {
                         wrap.innerHTML = `<div class="relic-frame"><img src="${r.imgUrl || ''}"></div><span class="relic-name">${r.name}</span>`;
                     }
-
                     wrap.onpointerdown = (e) => {
                         startX = e.clientX; startY = e.clientY; window.longPressed = false; window.hasMoved = false;
                         if(isEditMode) { window.pTimer = setTimeout(() => { window.longPressed = true; showContextMenu(e, id); }, 700); }
@@ -216,6 +225,30 @@
             });
         }
 
+        // ORACLE LOGIC (90m Arrival Prep Fixed)
+        function calculateOracle() {
+            const start = document.getElementById('work-start').value;
+            const travel = parseInt(document.getElementById('travel-time').value) || 0;
+            if(!start) return;
+            const [h, m] = start.split(':').map(Number);
+            let workTime = new Date(); workTime.setHours(h, m, 0, 0);
+            let arrivalTime = new Date(workTime.getTime() - (90 * 60000));
+            document.getElementById('prep-time').innerText = arrivalTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false});
+            let leaveTime = new Date(arrivalTime.getTime() - (travel * 60000));
+            document.getElementById('leave-time').innerText = leaveTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false});
+            document.getElementById('result-box').style.display = 'block';
+        }
+
+        // PERCENTAGE LOGIC
+        function calculatePerc() {
+            const val = parseFloat(document.getElementById('perc-val').value) || 0;
+            const perc = parseFloat(document.getElementById('perc-num').value) || 0;
+            const result = (perc / 100) * val;
+            document.getElementById('perc-total').innerText = result.toLocaleString();
+            document.getElementById('perc-result-box').style.display = 'block';
+        }
+
+        // FOLDER & ADMIN HELPERS (Preserved)
         async function reorder(sid, tid) {
             const siblings = Object.keys(allRelics).filter(id => allRelics[id].parent === currentFolder).sort((a,b) => (allRelics[a].sortOrder||0)-(allRelics[b].sortOrder||0));
             const from = siblings.indexOf(sid), to = siblings.indexOf(tid);
@@ -223,7 +256,6 @@
             const updates = {}; siblings.forEach((id, i) => { updates[`relics/${id}/sortOrder`] = i; });
             await rtdb.ref().update(updates);
         }
-
         function enterFolder(id, name) { currentFolder = id; document.getElementById('status-text').innerText = name; document.getElementById('back-btn').style.display = 'block'; loadRelics(); }
         function goBack() { currentFolder = 'root'; document.getElementById('status-text').innerText = "Gothic Archive"; document.getElementById('back-btn').style.display = 'none'; loadRelics(); }
         function triggerImageUpdate() { document.getElementById('relic-update-file').click(); document.getElementById('context-menu').style.display = 'none'; }
@@ -263,42 +295,6 @@
             document.getElementById('context-menu').style.display = 'none';
         }
         function executeMove(tid) { rtdb.ref('relics/'+selectedId).update({parent: tid}); document.getElementById('move-menu').style.display = 'none'; }
-
-        // --- UPDATED LOGIC: PREP AT DESTINATION ---
-        function calculateOracle() {
-            const startTimeInput = document.getElementById('work-start').value;
-            const journeyMinutes = parseInt(document.getElementById('travel-time').value) || 0;
-            if(!startTimeInput) return;
-
-            const [h, m] = startTimeInput.split(':').map(Number);
-            let workTime = new Date(); 
-            workTime.setHours(h, m, 0, 0);
-
-            // 1. ARRIVE AT DESTINATION (Work Start - 90 mins for prep ritual)
-            let arrivalTime = new Date(workTime.getTime() - (90 * 60000));
-            document.getElementById('prep-time').innerText = arrivalTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false});
-
-            // 2. LEAVE HOME (Arrival Time - Journey Minutes)
-            let leaveTime = new Date(arrivalTime.getTime() - (journeyMinutes * 60000));
-            document.getElementById('leave-time').innerText = leaveTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false});
-
-            document.getElementById('result-box').style.display = 'block';
-        }
-
-        async function openCitymapper() {
-            const dest = document.getElementById('dest-address').value; if(!dest) return;
-            try {
-                const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(dest)}`);
-                const data = await res.json();
-                const url = data.length > 0 ? `citymapper://directions?endcoord=${data[0].lat},${data[0].lon}&endname=${encodeURIComponent(dest)}` : `citymapper://directions?endaddress=${encodeURIComponent(dest)}`;
-                window.location.href = url;
-            } catch(e) { window.location.href = `citymapper://directions?endaddress=${encodeURIComponent(dest)}`; }
-        }
-        function addSavedLocation() {
-            const dest = document.getElementById('dest-address').value; if(!dest) return;
-            let saved = JSON.parse(localStorage.getItem('gothic_dests') || '[]');
-            if(!saved.includes(dest)) { saved.push(dest); localStorage.setItem('gothic_dests', JSON.stringify(saved)); renderSavedShelf(); }
-        }
         function renderSavedShelf() {
             const shelf = document.getElementById('saved-shelf'); shelf.innerHTML = '';
             const saved = JSON.parse(localStorage.getItem('gothic_dests') || '[]');
@@ -309,8 +305,6 @@
                 shelf.appendChild(chip);
             });
         }
-        function removeLoc(loc) { let s = JSON.parse(localStorage.getItem('gothic_dests')).filter(i => i !== loc); localStorage.setItem('gothic_dests', JSON.stringify(s)); renderSavedShelf(); }
-
         window.onclick = (e) => { if(!e.target.closest('.menu-item')) { document.getElementById('context-menu').style.display='none'; document.getElementById('move-menu').style.display='none'; } };
     </script>
 </body>
