@@ -34,13 +34,12 @@
         
         #archive-grid { 
             display: grid; padding: 20px; 
-            /* Grid configuration for 180x180 items */
-            grid-template-columns: repeat(auto-fill, 180px); 
-            gap: 25px; width: 100%; max-width: 1400px;
+            /* Compact grid for 64x64 items */
+            grid-template-columns: repeat(auto-fill, 76px); 
+            gap: 20px 12px; width: 100%; max-width: 500px;
             justify-content: center; align-items: start; position: relative;
         }
 
-        /* Combined Widget Container */
         #tools-nexus {
             display: flex; flex-wrap: wrap; gap: 20px; justify-content: center;
             width: 95%; max-width: 800px; margin: 40px auto;
@@ -68,33 +67,37 @@
             box-shadow: 0 0 20px rgba(0,0,0,1);
         }
 
-        /* Standarized Relic & Folder Styling (180x180) */
-        .relic-wrapper { display: flex; flex-direction: column; align-items: center; position: relative; cursor: pointer; user-select: none; touch-action: none; width: 180px; }
+        /* iOS COMPACT STYLING (64x64) */
+        .relic-wrapper { display: flex; flex-direction: column; align-items: center; position: relative; cursor: pointer; user-select: none; touch-action: none; width: 76px; }
         
-        .relic-frame { width: 180px; height: 180px; position: relative; display: flex; align-items: center; justify-content: center; pointer-events: none; overflow: hidden;}
+        .relic-frame { 
+            width: 64px; height: 64px; position: relative; display: flex; 
+            align-items: center; justify-content: center; pointer-events: none; 
+            overflow: hidden; border-radius: 14px; /* iOS Squircle vibe */
+            background: #111;
+        }
         
         .relic-frame::before {
             content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            /* SVG Frame for the requested dimension */
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Cellipse cx='90' cy='90' rx='86' ry='86' fill='none' stroke='%237a0000' stroke-width='6'/%3E%3Cellipse cx='90' cy='90' rx='80' ry='80' fill='none' stroke='%238c7340' stroke-width='3'/%3E%3C/svg%3E");
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='2' y='2' width='60' height='60' rx='12' fill='none' stroke='%237a0000' stroke-width='2'/%3E%3Crect x='4' y='4' width='56' height='56' rx='10' fill='none' stroke='%238c7340' stroke-width='1'/%3E%3C/svg%3E");
             background-size: contain; background-repeat: no-repeat; z-index: 5;
         }
 
-        .relic-frame img { width: 160px; height: 160px; object-fit: cover; clip-path: ellipse(50% 50% at 50% 50%); filter: sepia(0.3); transition: filter 0.3s; }
+        .relic-frame img { width: 100%; height: 100%; object-fit: cover; filter: sepia(0.2); }
         
-        /* Folder Cover Styling (Shared with Relic) */
-        .folder-cover { display: flex; flex-direction: column; align-items: center; justify-content: center;}
+        .folder-cover { display: flex; flex-wrap: wrap; align-content: center; justify-content: center; padding: 4px; gap: 2px; }
         
-        .relic-wrapper:hover .relic-frame img { filter: sepia(0); }
+        .relic-name { 
+            margin-top: 6px; font-family: 'Cinzel'; font-size: 0.65rem; color: #fff; 
+            text-align: center; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; 
+        }
 
-        .relic-name { margin-top: 8px; font-family: 'Cinzel'; font-size: 0.9rem; color: var(--gold); text-align: center; max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-        @keyframes wiggle { 0% { transform: rotate(-1.5deg); } 50% { transform: rotate(1.5deg); } 100% { transform: rotate(-1.5deg); } }
-        .wiggle-mode .relic-wrapper:not(.is-dragging) { animation: wiggle 0.25s infinite; }
+        @keyframes wiggle { 0% { transform: rotate(-2deg); } 50% { transform: rotate(2deg); } 100% { transform: rotate(-2deg); } }
+        .wiggle-mode .relic-wrapper:not(.is-dragging) { animation: wiggle 0.2s infinite; }
         .relic-wrapper.is-dragging { opacity: 0.8; transform: scale(1.1); z-index: 5000; position: fixed; pointer-events: none; }
         .relic-wrapper.placeholder { opacity: 0.1; }
 
-        #context-menu, #move-menu { display: none; position: fixed; z-index: 6000; background: #0a0a0a; border: 1px solid var(--gold); padding: 5px; min-width: 160px; max-height: 80vh; overflow-y: auto; box-shadow: 0 0 30px #000; }
+        #context-menu, #move-menu { display: none; position: fixed; z-index: 6000; background: #0a0a0a; border: 1px solid var(--gold); padding: 5px; min-width: 160px; max-height: 80vh; overflow-y: auto; }
         .menu-item { padding: 14px 20px; font-family: 'Cinzel'; font-size: 0.75rem; color: var(--gold); cursor: pointer; border-bottom: 1px solid #1a1a1a; }
         .toggle-btn { background: transparent; border: 1px solid var(--gold); color: var(--gold); padding: 8px 15px; font-family: 'Cinzel'; font-size: 0.7rem; cursor: pointer; }
     </style>
@@ -145,32 +148,18 @@
             <span style="font-size:0.7rem; text-decoration:underline; cursor:pointer; display:block; margin:15px 0" onclick="openCitymapper()">Open Citymapper App →</span>
             <button class="calc-btn" onclick="calculateOracle()">Consult Oracle</button>
             <div id="result-box" class="result-panel">
-                <span style="font-size:0.55rem; text-transform:uppercase;">Leave Home:</span>
                 <span id="leave-time" class="departure-time" style="color:var(--gold);">--:--</span>
-                <hr style="border:0; border-top:1px solid #333; margin:10px 0;">
-                <span style="font-size:0.55rem; text-transform:uppercase;">Arrive at Destination:</span>
-                <span id="prep-time" class="departure-time">--:--</span>
-                <p style="font-size:0.45rem; opacity:0.7;">(Beginning 120m prep ritual before work)</p>
+                <span id="prep-time" style="font-size:0.7rem">--:--</span>
             </div>
         </div>
 
         <div id="perc-widget" class="ritual-tool">
             <div class="widget-title" style="margin-bottom:15px;">Percentage Relic</div>
-            <div class="input-group">
-                <label style="font-size:0.5rem">Base Number</label>
-                <input type="number" id="perc-val" class="time-input" placeholder="e.g. 250">
-            </div>
-            <div class="input-group">
-                <label style="font-size:0.5rem">Percent (%)</label>
-                <input type="number" id="perc-num" class="time-input" value="20">
-            </div>
-            <div style="font-size: 0.55rem; color: var(--gold); margin-bottom: 10px; border: 1px solid #1a1a1a; padding: 5px;">
-                Material & Distance Calculation
-            </div>
+            <input type="number" id="perc-val" class="time-input" placeholder="Value">
+            <input type="number" id="perc-num" class="time-input" value="20" style="margin-top:5px;">
             <button class="calc-btn" style="background:#333;" onclick="calculatePerc()">Solve Ritual</button>
             <div id="perc-result-box" class="result-panel">
-                <span style="font-size:0.55rem; text-transform:uppercase;">Result:</span>
-                <span id="perc-total" class="departure-time" style="color:var(--gold); font-size:1.2rem;">0</span>
+                <span id="perc-total" class="departure-time" style="color:var(--gold);">0</span>
             </div>
         </div>
     </div>
@@ -202,7 +191,6 @@
 
         window.onload = () => { loadRelics(); renderSavedShelf(); };
 
-        // RELIC GRID (Standardized 180x180 & Folder Covers Enabled)
         function loadRelics() {
             rtdb.ref('relics').on('value', snap => {
                 allRelics = snap.val() || {};
@@ -215,21 +203,15 @@
                     const wrap = document.createElement('div'); wrap.className = 'relic-wrapper'; wrap.dataset.id = id;
                     
                     if(r.type === 'folder') {
-                        // Folder covers enabled: using the shared image property if available
-                        const coverUrl = r.imgUrl || ''; // Uses same imgUrl field
-                        
-                        // If no cover is uploaded, display a text fallback/preview
+                        const coverUrl = r.imgUrl || '';
                         if (!coverUrl) {
                             const kids = Object.values(allRelics).filter(item => item.parent === id);
-                            let html = kids.slice(0,4).map(k => `<div class="folder-preview-text" style="font-size:0.6rem;">${k.name}</div>`).join('');
-                            wrap.innerHTML = `<div class="relic-frame folder-cover" style="flex-direction:column;">${html}</div><span class="relic-name">${r.name}</span>`;
+                            let html = kids.slice(0,4).map(k => `<div style="width:24px; height:24px; background:#222; font-size:0.3rem; display:flex; align-items:center; justify-content:center; border:0.5px solid #444; overflow:hidden;">${k.name.substring(0,2)}</div>`).join('');
+                            wrap.innerHTML = `<div class="relic-frame folder-cover">${html}</div><span class="relic-name">${r.name}</span>`;
                         } else {
-                            // If cover is present, treat it structurally like a relic
-                            wrap.innerHTML = `<div class="relic-frame folder-cover"><img src="${coverUrl}"></div><span class="relic-name">${r.name}</span>`;
+                            wrap.innerHTML = `<div class="relic-frame"><img src="${coverUrl}"></div><span class="relic-name">${r.name}</span>`;
                         }
-
                     } else {
-                        // Relics behave as before
                         wrap.innerHTML = `<div class="relic-frame"><img src="${r.imgUrl || ''}"></div><span class="relic-name">${r.name}</span>`;
                     }
                     
@@ -248,7 +230,7 @@
                                     ghostItem = dragItem.cloneNode(true); ghostItem.classList.add('is-dragging');
                                     dragItem.classList.add('placeholder'); document.body.appendChild(ghostItem);
                                 }
-                                ghostItem.style.left = `${e.clientX - 90}px`; ghostItem.style.top = `${e.clientY - 90}px`;
+                                ghostItem.style.left = `${e.clientX - 32}px`; ghostItem.style.top = `${e.clientY - 32}px`;
                                 const target = document.elementsFromPoint(e.clientX, e.clientY).find(el => el.classList.contains('relic-wrapper') && el !== dragItem && el !== ghostItem);
                                 if(target) reorder(dragItem.dataset.id, target.dataset.id);
                             }
@@ -268,18 +250,14 @@
             });
         }
 
-        // DEPARTURE ORACLE (2hr Prep Ritual)
         function calculateOracle() {
             const start = document.getElementById('work-start').value;
             const travel = parseInt(document.getElementById('travel-time').value) || 0;
             if(!start) return;
             const [h, m] = start.split(':').map(Number);
             let workTime = new Date(); workTime.setHours(h, m, 0, 0);
-            
-            // 2 Hours (120 minutes) Arrival Ritual
             let arrivalTime = new Date(workTime.getTime() - (120 * 60000));
-            document.getElementById('prep-time').innerText = arrivalTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false});
-            
+            document.getElementById('prep-time').innerText = "Arrive: " + arrivalTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false});
             let leaveTime = new Date(arrivalTime.getTime() - (travel * 60000));
             document.getElementById('leave-time').innerText = leaveTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false});
             document.getElementById('result-box').style.display = 'block';
@@ -287,12 +265,7 @@
 
         async function openCitymapper() {
             const dest = document.getElementById('dest-address').value; if(!dest) return;
-            try {
-                const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(dest)}`);
-                const data = await res.json();
-                const url = data.length > 0 ? `citymapper://directions?endcoord=${data[0].lat},${data[0].lon}&endname=${encodeURIComponent(dest)}` : `citymapper://directions?endaddress=${encodeURIComponent(dest)}`;
-                window.location.href = url;
-            } catch(e) { window.location.href = `citymapper://directions?endaddress=${encodeURIComponent(dest)}`; }
+            window.location.href = `citymapper://directions?endaddress=${encodeURIComponent(dest)}`;
         }
         function addSavedLocation() {
             const dest = document.getElementById('dest-address').value; if(!dest) return;
@@ -314,8 +287,7 @@
         function calculatePerc() {
             const val = parseFloat(document.getElementById('perc-val').value) || 0;
             const perc = parseFloat(document.getElementById('perc-num').value) || 0;
-            const result = (perc / 100) * val;
-            document.getElementById('perc-total').innerText = result.toLocaleString();
+            document.getElementById('perc-total').innerText = ((perc / 100) * val).toLocaleString();
             document.getElementById('perc-result-box').style.display = 'block';
         }
 
@@ -329,17 +301,11 @@
         function enterFolder(id, name) { currentFolder = id; document.getElementById('status-text').innerText = name; document.getElementById('back-btn').style.display = 'block'; loadRelics(); }
         function goBack() { currentFolder = 'root'; document.getElementById('status-text').innerText = "Gothic Archive"; document.getElementById('back-btn').style.display = 'none'; loadRelics(); }
         function triggerImageUpdate() { document.getElementById('relic-update-file').click(); document.getElementById('context-menu').style.display = 'none'; }
-        
-        // --- SHARED IMAGE UPDATE HANDLER (Now works for Folders) ---
         document.getElementById('relic-update-file').onchange = (e) => {
             const file = e.target.files[0]; if(!file || !selectedId) return;
-            const reader = new FileReader(); reader.onload = (ev) => { 
-                // Updates the imgUrl field for the selected item, whether relic or folder.
-                rtdb.ref('relics/' + selectedId).update({ imgUrl: ev.target.result }); 
-            };
+            const reader = new FileReader(); reader.onload = (ev) => { rtdb.ref('relics/' + selectedId).update({ imgUrl: ev.target.result }); };
             reader.readAsDataURL(file);
         };
-
         function showContextMenu(e, id) {
             selectedId = id; const menu = document.getElementById('context-menu'); menu.style.display = 'block';
             let posX = e.clientX, posY = e.clientY;
@@ -349,7 +315,7 @@
         }
         document.getElementById('edit-toggle').onclick = (e) => {
             isEditMode = !isEditMode; document.body.classList.toggle('wiggle-mode', isEditMode);
-            e.target.innerText = isEditMode ? "Lock Archive" : "Edit Mode";
+            e.target.innerText = isEditMode ? "Lock" : "Edit";
             document.getElementById('admin-desk').style.display = isEditMode ? 'flex' : 'none';
             if(isEditMode && !auth.currentUser) auth.signInAnonymously();
         };
@@ -360,7 +326,7 @@
             if(f) { const r = new FileReader(); r.onload = (e) => push(e.target.result); r.readAsDataURL(f); } else push("");
         };
         function menuAction(action) {
-            if(action === 'delete' && confirm("Purge this relic?")) rtdb.ref('relics/'+selectedId).remove();
+            if(action === 'delete' && confirm("Purge?")) rtdb.ref('relics/'+selectedId).remove();
             if(action === 'edit') { const n = prompt("New Name:", allRelics[selectedId].name); if(n) rtdb.ref('relics/'+selectedId).update({name: n}); }
             document.getElementById('context-menu').style.display = 'none';
         }
