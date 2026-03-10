@@ -23,7 +23,6 @@
             overflow-x: hidden; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 50px;
         }
 
-        /* Top Controls & Tool Nexus */
         #top-controls { 
             width: 100%; padding: 15px 20px; display: flex; justify-content: space-between; 
             align-items: center; border-bottom: 1px solid #1a1a1a; background: #000; 
@@ -33,36 +32,39 @@
 
         #tool-nexus-top {
             position: fixed; top: 70px; left: 50%; transform: translateX(-50%);
-            z-index: 2500; display: flex; flex-direction: column; align-items: center; gap: 10px;
-            width: 100%; max-width: 400px; padding: 0 20px; box-sizing: border-box;
+            z-index: 2500; display: flex; flex-direction: column; align-items: center;
+            width: 100%; max-width: 400px; padding: 0 15px; box-sizing: border-box;
         }
 
-        .tool-trigger-row { display: flex; gap: 10px; justify-content: center; width: 100%; }
+        .tool-trigger-row { display: flex; gap: 8px; justify-content: center; width: 100%; }
         
         .ritual-tool { 
-            display: none; background: rgba(5, 5, 5, 0.98); border: 1px solid var(--gold); 
-            padding: 15px; width: 100%; font-family: 'Cinzel', serif; 
-            color: var(--gold); box-shadow: 0 10px 30px #000; text-align: center;
-            margin-top: 5px; border-radius: 4px;
+            max-height: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s;
+            opacity: 0; background: rgba(5, 5, 5, 0.98); border: 1px solid var(--gold); 
+            width: 100%; font-family: 'Cinzel', serif; color: var(--gold); 
+            box-shadow: 0 10px 40px #000; text-align: center; margin-top: 5px; border-radius: 4px;
         }
 
-        /* Standard Grid & Shapes */
+        .ritual-tool.expanded { max-height: 520px; opacity: 1; padding: 15px; }
+
+        /* RESPONSIVE GRID ADJUSTMENT */
         #archive-grid { 
-            display: grid; padding: 160px 40px 40px; 
-            grid-template-columns: repeat(auto-fill, 80px); 
-            gap: 30px 20px; width: 100%; max-width: 95vw;
-            justify-content: start; align-items: start; position: relative;
+            display: grid; padding: 160px 20px 40px; 
+            /* Auto-fit handles the "perfect number in a row" for both iPad and iPhone */
+            grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); 
+            gap: 25px 15px; width: 100%; max-width: 1000px;
+            justify-items: center; position: relative; box-sizing: border-box;
         }
 
-        .relic-wrapper { display: flex; flex-direction: column; align-items: center; width: 80px; cursor: pointer; user-select: none; touch-action: none; position: relative; }
+        /* Constraints for larger screens to prevent excessive spreading */
+        @media (min-width: 768px) {
+            #archive-grid { grid-template-columns: repeat(auto-fill, 80px); gap: 30px 20px; padding-left: 40px; padding-right: 40px; justify-content: start; }
+        }
+
+        .relic-wrapper { display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 80px; cursor: pointer; user-select: none; touch-action: none; position: relative; }
         
-        /* Unified Shape (64x64) */
-        .relic-frame, .folder-frame { 
-            width: 64px; height: 64px; position: relative; display: flex; 
-            align-items: center; justify-content: center; overflow: hidden; border-radius: 12px;
-        }
+        .relic-frame, .folder-frame { width: 64px; height: 64px; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 12px; flex-shrink: 0; }
 
-        /* Folder Specific Gothic Frame Overlay */
         .folder-frame::before {
             content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='2' y='2' width='60' height='60' rx='10' fill='none' stroke='%237a0000' stroke-width='3'/%3E%3Crect x='5' y='5' width='54' height='54' rx='8' fill='none' stroke='%238c7340' stroke-width='1'/%3E%3C/svg%3E");
@@ -71,33 +73,23 @@
 
         .relic-frame img, .folder-frame img { width: 100%; height: 100%; object-fit: cover; filter: sepia(0.2); }
         .folder-fallback { background: #0a0a0a; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--gold); font-size: 0.8rem; }
+        .relic-name { margin-top: 8px; font-family: 'Cinzel'; font-size: 0.6rem; color: #fff; text-align: center; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-        .relic-name { 
-            margin-top: 6px; font-family: 'Cinzel'; font-size: 0.6rem; color: #fff; 
-            text-align: center; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; 
-        }
-
-        /* Inputs & Buttons */
-        .time-input { background: #000; border: 1px solid #333; color: #fff; padding: 10px; width: 100%; box-sizing: border-box; font-size: 0.8rem; margin-bottom: 5px; }
-        .calc-btn { background: var(--crimson); color: white; border: none; padding: 10px; width: 100%; cursor: pointer; font-family: 'Cinzel'; font-size: 0.7rem; }
-        .toggle-btn { background: #000; border: 1px solid var(--gold); color: var(--gold); padding: 6px 12px; font-family: 'Cinzel'; font-size: 0.65rem; cursor: pointer; }
+        .time-input { background: #000; border: 1px solid #333; color: #fff; padding: 12px; width: 100%; box-sizing: border-box; font-size: 0.85rem; margin-bottom: 5px; border-radius: 4px; }
+        .calc-btn { background: var(--crimson); color: white; border: none; padding: 12px; width: 100%; cursor: pointer; font-family: 'Cinzel'; font-size: 0.75rem; border-radius: 4px; }
+        .toggle-btn { background: #000; border: 1px solid var(--gold); color: var(--gold); padding: 8px 14px; font-family: 'Cinzel'; font-size: 0.7rem; cursor: pointer; border-radius: 4px; }
+        .retract-btn { background: transparent; border: none; color: #555; font-size: 0.6rem; cursor: pointer; text-decoration: underline; margin-top: 12px; font-family: 'Cinzel'; }
         .active-tool { background: var(--gold) !important; color: #000 !important; }
 
-        #admin-desk { 
-            display: none; position: fixed; bottom: 20px; right: 20px; 
-            z-index: 4000; padding: 15px; gap: 8px; flex-direction: column; 
-            width: 260px; background: rgba(8, 8, 8, 0.95); border: 1px solid var(--gold); 
-        }
-
-        #context-menu, #move-menu { display: none; position: fixed; z-index: 6000; background: #0a0a0a; border: 1px solid var(--gold); padding: 5px; min-width: 160px; }
+        #admin-desk { display: none; position: fixed; bottom: 20px; right: 20px; z-index: 4000; padding: 15px; gap: 8px; flex-direction: column; width: 260px; background: rgba(8, 8, 8, 0.95); border: 1px solid var(--gold); border-radius: 4px; }
+        #context-menu, #move-menu { display: none; position: fixed; z-index: 6000; background: #0a0a0a; border: 1px solid var(--gold); padding: 5px; min-width: 160px; box-shadow: 0 5px 20px #000; }
         .menu-item { padding: 14px 20px; font-family: 'Cinzel'; font-size: 0.75rem; color: var(--gold); cursor: pointer; border-bottom: 1px solid #1a1a1a; }
-        
-        .result-panel { margin-top: 10px; padding: 8px; border: 1px dashed var(--crimson); background: rgba(122, 0, 0, 0.1); font-size: 0.8rem; }
-        #saved-shelf { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; justify-content: center; }
-        .dest-chip { background: #111; border: 1px solid var(--gold); color: var(--gold); padding: 3px 6px; font-size: 0.5rem; cursor: pointer; }
+        .result-panel { margin-top: 10px; padding: 12px; border: 1px dashed var(--crimson); background: rgba(122, 0, 0, 0.1); font-size: 0.85rem; border-radius: 4px; }
+        #saved-shelf { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; justify-content: center; }
+        .dest-chip { background: #111; border: 1px solid var(--gold); color: var(--gold); padding: 5px 8px; font-size: 0.55rem; cursor: pointer; border-radius: 2px; }
 
-        @keyframes wiggle { 0% { transform: rotate(-2deg); } 50% { transform: rotate(2deg); } 100% { transform: rotate(-2deg); } }
-        .wiggle-mode .relic-wrapper:not(.is-dragging) { animation: wiggle 0.2s infinite; }
+        @keyframes wiggle { 0% { transform: rotate(-1.5deg); } 50% { transform: rotate(1.5deg); } 100% { transform: rotate(-1.5deg); } }
+        .wiggle-mode .relic-wrapper:not(.is-dragging) { animation: wiggle 0.25s infinite; }
         .relic-wrapper.is-dragging { opacity: 0.8; transform: scale(1.1); z-index: 5000; position: fixed; pointer-events: none; }
     </style>
 </head>
@@ -106,7 +98,7 @@
     <div id="top-controls">
         <div style="display:flex; align-items:center;">
             <button id="back-btn" class="toggle-btn" style="display:none; margin-right:10px;" onclick="goBack()">← Back</button>
-            <span id="status-text" style="font-family:'Cinzel'; font-size:0.7rem; color:var(--gold);">Gothic Archive</span>
+            <span id="status-text" style="font-family:'Cinzel'; font-size:0.75rem; color:var(--gold);">Gothic Archive</span>
         </div>
         <button id="edit-toggle" class="toggle-btn">Edit</button>
     </div>
@@ -120,23 +112,25 @@
         <div id="time-widget" class="ritual-tool">
             <div id="saved-shelf"></div>
             <input type="time" id="work-start" class="time-input" value="09:00">
-            <input type="text" id="dest-address" class="time-input" placeholder="Postcode">
-            <button class="toggle-btn" style="width:100%; margin-bottom:5px; font-size:0.5rem" onclick="addSavedLocation()">+ Save Shelf</button>
+            <input type="text" id="dest-address" class="time-input" placeholder="Postcode / Address">
+            <button class="toggle-btn" style="width:100%; margin-bottom:10px; font-size:0.55rem" onclick="addSavedLocation()">+ Save Shelf</button>
             <input type="number" id="travel-time" class="time-input" value="45" placeholder="Travel Mins">
             <button class="calc-btn" onclick="calculateOracle()">Consult Oracle</button>
             <div id="result-box" class="result-panel" style="display:none">
-                <div id="leave-time" style="font-size:1.2rem; font-weight:bold;">--:--</div>
-                <div id="prep-time" style="font-size:0.7rem; opacity:0.8;">--:--</div>
+                <div id="leave-time" style="font-size:1.3rem; font-weight:bold; color:#fff;">--:--</div>
+                <div id="prep-time" style="font-size:0.75rem; opacity:0.8;">--:--</div>
             </div>
+            <button class="retract-btn" onclick="closeAllTools()">Retract Panel</button>
         </div>
 
         <div id="perc-widget" class="ritual-tool">
             <input type="number" id="perc-val" class="time-input" placeholder="Value">
             <input type="number" id="perc-num" class="time-input" value="20">
-            <button class="calc-btn" onclick="calculatePerc()">Solve</button>
+            <button class="calc-btn" onclick="calculatePerc()">Solve Ritual</button>
             <div id="perc-result-box" class="result-panel" style="display:none">
-                <span id="perc-total" style="font-size:1.2rem;">0</span>
+                <span id="perc-total" style="font-size:1.3rem; color:#fff;">0</span>
             </div>
+            <button class="retract-btn" onclick="closeAllTools()">Retract Panel</button>
         </div>
     </div>
 
@@ -164,8 +158,7 @@
             apiKey: "AIzaSyAuNbY1Xv_ZF3kJah20qqPBz-IiiMAR9gE",
             authDomain: "aidenstartpage.firebaseapp.com",
             databaseURL: "https://aidenstartpage-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "aidenstartpage",
-            databaseURL: "https://aidenstartpage-default-rtdb.europe-west1.firebasedatabase.app"
+            projectId: "aidenstartpage"
         };
         firebase.initializeApp(firebaseConfig);
         const rtdb = firebase.database();
@@ -178,10 +171,14 @@
 
         function toggleTool(id, btn) {
             const tool = document.getElementById(id);
-            const isOpen = tool.style.display === 'block';
-            document.querySelectorAll('.ritual-tool').forEach(t => t.style.display = 'none');
+            const isAlreadyOpen = tool.classList.contains('expanded');
+            closeAllTools();
+            if(!isAlreadyOpen) { tool.classList.add('expanded'); btn.classList.add('active-tool'); }
+        }
+
+        function closeAllTools() {
+            document.querySelectorAll('.ritual-tool').forEach(t => t.classList.remove('expanded'));
             document.querySelectorAll('.tool-trigger-row .toggle-btn').forEach(b => b.classList.remove('active-tool'));
-            if(!isOpen) { tool.style.display = 'block'; btn.classList.add('active-tool'); }
         }
 
         function loadRelics() {
@@ -196,7 +193,6 @@
                     const wrap = document.createElement('div'); wrap.className = 'relic-wrapper'; wrap.dataset.id = id;
                     const frameClass = r.type === 'folder' ? 'folder-frame' : 'relic-frame';
                     const coverImg = r.imgUrl ? `<img src="${r.imgUrl}">` : (r.type === 'folder' ? `<div class="folder-fallback">F</div>` : '');
-                    
                     wrap.innerHTML = `<div class="${frameClass}">${coverImg}</div><span class="relic-name">${r.name}</span>`;
                     
                     wrap.onpointerdown = (e) => {
@@ -241,8 +237,8 @@
             let workTime = new Date(); workTime.setHours(h, m, 0, 0);
             let arrivalTime = new Date(workTime.getTime() - (120 * 60000));
             let leaveTime = new Date(arrivalTime.getTime() - (travel * 60000));
-            document.getElementById('leave-time').innerText = "Leave: " + leaveTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-            document.getElementById('prep-time').innerText = "Arrive: " + arrivalTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+            document.getElementById('leave-time').innerText = "Leave: " + leaveTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false});
+            document.getElementById('prep-time').innerText = "Arrive: " + arrivalTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false});
             document.getElementById('result-box').style.display = 'block';
         }
 
@@ -278,8 +274,8 @@
             await rtdb.ref().update(updates);
         }
 
-        function enterFolder(id, name) { currentFolder = id; document.getElementById('status-text').innerText = name; document.getElementById('back-btn').style.display = 'block'; loadRelics(); }
-        function goBack() { currentFolder = 'root'; document.getElementById('status-text').innerText = "Gothic Archive"; document.getElementById('back-btn').style.display = 'none'; loadRelics(); }
+        function enterFolder(id, name) { currentFolder = id; document.getElementById('status-text').innerText = name; document.getElementById('back-btn').style.display = 'block'; loadRelics(); closeAllTools(); }
+        function goBack() { currentFolder = 'root'; document.getElementById('status-text').innerText = "Gothic Archive"; document.getElementById('back-btn').style.display = 'none'; loadRelics(); closeAllTools(); }
         function triggerImageUpdate() { document.getElementById('relic-update-file').click(); document.getElementById('context-menu').style.display = 'none'; }
         
         document.getElementById('relic-update-file').onchange = (e) => {
