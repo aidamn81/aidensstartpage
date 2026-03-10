@@ -129,7 +129,7 @@
                 <input type="number" id="travel-time" class="time-input" value="45">
             </div>
             <div style="font-size: 0.55rem; color: var(--gold); margin-bottom: 10px; border: 1px solid #1a1a1a; padding: 5px;">
-                Arrival Ritual: 1.5 Hours Setup Included
+                Arrival Ritual: 2 Hours Setup Included
             </div>
             <span style="font-size:0.7rem; text-decoration:underline; cursor:pointer; display:block; margin:15px 0" onclick="openCitymapper()">Open Citymapper App →</span>
             <button class="calc-btn" onclick="calculateOracle()">Consult Oracle</button>
@@ -139,6 +139,7 @@
                 <hr style="border:0; border-top:1px solid #333; margin:10px 0;">
                 <span style="font-size:0.55rem; text-transform:uppercase;">Arrive at Destination:</span>
                 <span id="prep-time" class="departure-time">--:--</span>
+                <p style="font-size:0.45rem; opacity:0.7;">(Beginning 120m prep ritual before work)</p>
             </div>
         </div>
 
@@ -190,7 +191,6 @@
 
         window.onload = () => { loadRelics(); renderSavedShelf(); };
 
-        // RELIC GRID (Folders Fixed: Immediate Tap vs Hold Drag)
         function loadRelics() {
             rtdb.ref('relics').on('value', snap => {
                 allRelics = snap.val() || {};
@@ -243,21 +243,23 @@
             });
         }
 
-        // DEPARTURE ORACLE (90m Arrival Ritual Logic)
+        // ORACLE LOGIC (Updated to 120m Prep)
         function calculateOracle() {
             const start = document.getElementById('work-start').value;
             const travel = parseInt(document.getElementById('travel-time').value) || 0;
             if(!start) return;
             const [h, m] = start.split(':').map(Number);
             let workTime = new Date(); workTime.setHours(h, m, 0, 0);
-            let arrivalTime = new Date(workTime.getTime() - (90 * 60000)); // 1.5hr ritual
+            
+            // 2 Hours (120 minutes) Arrival Ritual
+            let arrivalTime = new Date(workTime.getTime() - (120 * 60000));
             document.getElementById('prep-time').innerText = arrivalTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false});
-            let leaveTime = new Date(arrivalTime.getTime() - (travel * 60000)); // Subtract journey
+            
+            let leaveTime = new Date(arrivalTime.getTime() - (travel * 60000));
             document.getElementById('leave-time').innerText = leaveTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false});
             document.getElementById('result-box').style.display = 'block';
         }
 
-        // CITYMAPPER & SAVED LOCATIONS
         async function openCitymapper() {
             const dest = document.getElementById('dest-address').value; if(!dest) return;
             try {
@@ -282,13 +284,8 @@
                 shelf.appendChild(chip);
             });
         }
-        function removeLoc(loc) { 
-            let s = JSON.parse(localStorage.getItem('gothic_dests')).filter(i => i !== loc); 
-            localStorage.setItem('gothic_dests', JSON.stringify(s)); 
-            renderSavedShelf(); 
-        }
+        function removeLoc(loc) { let s = JSON.parse(localStorage.getItem('gothic_dests')).filter(i => i !== loc); localStorage.setItem('gothic_dests', JSON.stringify(s)); renderSavedShelf(); }
 
-        // PERCENTAGE RELIC
         function calculatePerc() {
             const val = parseFloat(document.getElementById('perc-val').value) || 0;
             const perc = parseFloat(document.getElementById('perc-num').value) || 0;
@@ -297,7 +294,6 @@
             document.getElementById('perc-result-box').style.display = 'block';
         }
 
-        // SYSTEM HELPERS
         async function reorder(sid, tid) {
             const siblings = Object.keys(allRelics).filter(id => allRelics[id].parent === currentFolder).sort((a,b) => (allRelics[a].sortOrder||0)-(allRelics[b].sortOrder||0));
             const from = siblings.indexOf(sid), to = siblings.indexOf(tid);
