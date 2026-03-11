@@ -45,24 +45,20 @@
             box-shadow: 0 10px 40px #000; text-align: center; margin-top: 5px; border-radius: 4px;
         }
 
-        .ritual-tool.expanded { max-height: 520px; opacity: 1; padding: 15px; }
+        .ritual-tool.expanded { max-height: 600px; opacity: 1; padding: 15px; }
 
-        /* RESPONSIVE GRID ADJUSTMENT */
         #archive-grid { 
             display: grid; padding: 160px 20px 40px; 
-            /* Auto-fit handles the "perfect number in a row" for both iPad and iPhone */
             grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); 
             gap: 25px 15px; width: 100%; max-width: 1000px;
             justify-items: center; position: relative; box-sizing: border-box;
         }
 
-        /* Constraints for larger screens to prevent excessive spreading */
         @media (min-width: 768px) {
             #archive-grid { grid-template-columns: repeat(auto-fill, 80px); gap: 30px 20px; padding-left: 40px; padding-right: 40px; justify-content: start; }
         }
 
         .relic-wrapper { display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 80px; cursor: pointer; user-select: none; touch-action: none; position: relative; }
-        
         .relic-frame, .folder-frame { width: 64px; height: 64px; position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 12px; flex-shrink: 0; }
 
         .folder-frame::before {
@@ -75,18 +71,19 @@
         .folder-fallback { background: #0a0a0a; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: var(--gold); font-size: 0.8rem; }
         .relic-name { margin-top: 8px; font-family: 'Cinzel'; font-size: 0.6rem; color: #fff; text-align: center; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-        .time-input { background: #000; border: 1px solid #333; color: #fff; padding: 12px; width: 100%; box-sizing: border-box; font-size: 0.85rem; margin-bottom: 5px; border-radius: 4px; }
+        .time-input { background: #000; border: 1px solid #333; color: #fff; padding: 12px; width: 100%; box-sizing: border-box; font-size: 0.85rem; margin-bottom: 5px; border-radius: 4px; font-family: 'Playfair Display', serif; }
         .calc-btn { background: var(--crimson); color: white; border: none; padding: 12px; width: 100%; cursor: pointer; font-family: 'Cinzel'; font-size: 0.75rem; border-radius: 4px; }
         .toggle-btn { background: #000; border: 1px solid var(--gold); color: var(--gold); padding: 8px 14px; font-family: 'Cinzel'; font-size: 0.7rem; cursor: pointer; border-radius: 4px; }
         .retract-btn { background: transparent; border: none; color: #555; font-size: 0.6rem; cursor: pointer; text-decoration: underline; margin-top: 12px; font-family: 'Cinzel'; }
         .active-tool { background: var(--gold) !important; color: #000 !important; }
 
-        #admin-desk { display: none; position: fixed; bottom: 20px; right: 20px; z-index: 4000; padding: 15px; gap: 8px; flex-direction: column; width: 260px; background: rgba(8, 8, 8, 0.95); border: 1px solid var(--gold); border-radius: 4px; }
-        #context-menu, #move-menu { display: none; position: fixed; z-index: 6000; background: #0a0a0a; border: 1px solid var(--gold); padding: 5px; min-width: 160px; box-shadow: 0 5px 20px #000; }
-        .menu-item { padding: 14px 20px; font-family: 'Cinzel'; font-size: 0.75rem; color: var(--gold); cursor: pointer; border-bottom: 1px solid #1a1a1a; }
         .result-panel { margin-top: 10px; padding: 12px; border: 1px dashed var(--crimson); background: rgba(122, 0, 0, 0.1); font-size: 0.85rem; border-radius: 4px; }
         #saved-shelf { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; justify-content: center; }
         .dest-chip { background: #111; border: 1px solid var(--gold); color: var(--gold); padding: 5px 8px; font-size: 0.55rem; cursor: pointer; border-radius: 2px; }
+
+        #admin-desk { display: none; position: fixed; bottom: 20px; right: 20px; z-index: 4000; padding: 15px; gap: 8px; flex-direction: column; width: 260px; background: rgba(8, 8, 8, 0.95); border: 1px solid var(--gold); border-radius: 4px; }
+        #context-menu { display: none; position: fixed; z-index: 6000; background: #0a0a0a; border: 1px solid var(--gold); padding: 5px; min-width: 160px; box-shadow: 0 5px 20px #000; }
+        .menu-item { padding: 14px 20px; font-family: 'Cinzel'; font-size: 0.75rem; color: var(--gold); cursor: pointer; border-bottom: 1px solid #1a1a1a; }
 
         @keyframes wiggle { 0% { transform: rotate(-1.5deg); } 50% { transform: rotate(1.5deg); } 100% { transform: rotate(-1.5deg); } }
         .wiggle-mode .relic-wrapper:not(.is-dragging) { animation: wiggle 0.25s infinite; }
@@ -112,13 +109,17 @@
         <div id="time-widget" class="ritual-tool">
             <div id="saved-shelf"></div>
             <input type="time" id="work-start" class="time-input" value="09:00">
-            <input type="text" id="dest-address" class="time-input" placeholder="Postcode / Address">
-            <button class="toggle-btn" style="width:100%; margin-bottom:10px; font-size:0.55rem" onclick="addSavedLocation()">+ Save Shelf</button>
+            <input type="text" id="dest-address" class="time-input" placeholder="Address / Postcode">
+            <button class="toggle-btn" style="width:100%; margin-bottom:5px; font-size:0.55rem" onclick="addSavedLocation()">+ Save Shelf</button>
+            
+            <span style="font-size:0.6rem; text-decoration:underline; cursor:pointer; display:block; margin:8px 0" onclick="openCitymapper()">Open Citymapper App →</span>
+            
             <input type="number" id="travel-time" class="time-input" value="45" placeholder="Travel Mins">
             <button class="calc-btn" onclick="calculateOracle()">Consult Oracle</button>
+            
             <div id="result-box" class="result-panel" style="display:none">
-                <div id="leave-time" style="font-size:1.3rem; font-weight:bold; color:#fff;">--:--</div>
-                <div id="prep-time" style="font-size:0.75rem; opacity:0.8;">--:--</div>
+                <div id="leave-time" style="font-size:1.3rem; font-weight:bold; color:var(--gold);">--:--</div>
+                <div id="prep-time" style="font-size:0.75rem; opacity:0.8; color:#fff;">--:--</div>
             </div>
             <button class="retract-btn" onclick="closeAllTools()">Retract Panel</button>
         </div>
@@ -150,7 +151,7 @@
         <div class="menu-item" onclick="showMoveMenu()">Move</div>
         <div class="menu-item" onclick="menuAction('delete')" style="color:var(--crimson);">Purge</div>
     </div>
-    <div id="move-menu"></div>
+    <div id="move-menu" style="display:none; position:fixed; z-index:6000; background:#0a0a0a; border:1px solid var(--gold); padding:5px; min-width:160px;"></div>
     <input type="file" id="relic-update-file" accept="image/*" style="display:none">
 
     <script>
@@ -240,6 +241,11 @@
             document.getElementById('leave-time').innerText = "Leave: " + leaveTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false});
             document.getElementById('prep-time').innerText = "Arrive: " + arrivalTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false});
             document.getElementById('result-box').style.display = 'block';
+        }
+
+        function openCitymapper() {
+            const dest = document.getElementById('dest-address').value;
+            window.location.href = `citymapper://directions?endaddress=${encodeURIComponent(dest)}`;
         }
 
         function calculatePerc() {
