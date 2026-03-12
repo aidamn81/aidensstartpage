@@ -74,6 +74,8 @@
         .result-panel { margin-top: 10px; padding: 12px; border: 1px dashed var(--crimson); background: rgba(122, 0, 0, 0.15); border-radius: 6px; }
         #saved-shelf { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; justify-content: center; }
         .dest-chip { background: #1a1a1a; border: 1px solid var(--gold); color: var(--gold); padding: 5px 10px; font-size: 0.6rem; cursor: pointer; border-radius: 4px; }
+        
+        .nav-link { font-size: 0.65rem; color: var(--gold); text-decoration: underline; cursor: pointer; margin: 0 5px; }
     </style>
 </head>
 <body>
@@ -98,9 +100,10 @@
             <input type="text" id="dest-address" class="time-input" placeholder="Postcode / Address">
             <button class="toggle-btn" style="width:100%; margin-bottom:10px; font-size:0.6rem" onclick="addSavedLocation()">+ Add to Shelf</button>
             
-            <div style="margin-bottom:15px;">
-                <span id="nav-hint" style="font-size:0.5rem; color:var(--text); display:block; margin-bottom:4px; opacity:0;">Address copied! Paste in app.</span>
-                <span style="font-size:0.65rem; color:var(--gold); text-decoration:underline; cursor:pointer;" onclick="openCitymapper()">Consult Citymapper →</span>
+            <div style="margin-bottom:15px; display: flex; justify-content: center;">
+                <span class="nav-link" onclick="openCitymapper()">Citymapper →</span>
+                <span style="color: #444;">|</span>
+                <span class="nav-link" onclick="openGoogleMaps()">Google Maps →</span>
             </div>
 
             <input type="number" id="travel-time" class="time-input" value="45" placeholder="Travel Mins">
@@ -163,25 +166,33 @@
             document.getElementById('result-box').style.display = 'block';
         }
 
-        async function openCitymapper() {
+        function openCitymapper() {
             const addr = document.getElementById('dest-address').value;
             if(addr) {
-                // STEP 1: Copy to clipboard immediately
-                try {
-                    await navigator.clipboard.writeText(addr);
-                    document.getElementById('nav-hint').style.opacity = 1;
-                } catch (err) { console.log("Clipboard fail"); }
-
-                // STEP 2: Attempt the deep link
                 const encoded = encodeURIComponent(addr);
-                window.location.href = `citymapper://directions?endaddress=${encoded}&endname=Destination`;
+                // The 'search' command is often more reliable than 'directions' for text-only inputs
+                window.location.href = `citymapper://search?q=${encoded}`;
                 
-                // STEP 3: Fallback to web link after a short delay
+                // Backup if the app doesn't take the search query
                 setTimeout(() => {
                     window.location.href = `https://citymapper.com/directions?endaddress=${encoded}`;
                 }, 800);
             } else {
                 window.location.href = `citymapper://`;
+            }
+        }
+
+        function openGoogleMaps() {
+            const addr = document.getElementById('dest-address').value;
+            if(addr) {
+                const encoded = encodeURIComponent(addr);
+                window.location.href = `comgooglemaps://?daddr=${encoded}&directionsmode=transit`;
+                
+                setTimeout(() => {
+                    window.location.href = `https://www.google.com/maps/dir/?api=1&destination=${encoded}`;
+                }, 800);
+            } else {
+                window.location.href = `comgooglemaps://`;
             }
         }
 
@@ -203,10 +214,7 @@
             const saved = JSON.parse(localStorage.getItem('gothic_dests') || '[]');
             saved.forEach(loc => {
                 const chip = document.createElement('div'); chip.className = 'dest-chip'; chip.innerText = loc;
-                chip.onclick = () => {
-                    document.getElementById('dest-address').value = loc;
-                    document.getElementById('nav-hint').style.opacity = 0;
-                };
+                chip.onclick = () => document.getElementById('dest-address').value = loc;
                 chip.oncontextmenu = (e) => { e.preventDefault(); let s = saved.filter(i => i !== loc); localStorage.setItem('gothic_dests', JSON.stringify(s)); renderSavedShelf(); };
                 shelf.appendChild(chip);
             });
