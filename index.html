@@ -183,11 +183,11 @@
         function openCitymapper() {
             const addr = document.getElementById('dest-address').value;
             if(addr) {
-                // Enhanced Deep Link for better clipboard/handover behavior
+                // UNIVERSAL LINK - Works much better on iOS for passing data
                 const encoded = encodeURIComponent(addr);
-                window.location.href = `citymapper://directions?endaddress=${encoded}&endname=Destination`;
+                window.location.href = `https://citymapper.com/directions?endaddress=${encoded}`;
             } else {
-                window.location.href = `citymapper://`;
+                window.location.href = `https://citymapper.com/`;
             }
         }
 
