@@ -99,6 +99,7 @@
             <button class="toggle-btn" style="width:100%; margin-bottom:10px; font-size:0.6rem" onclick="addSavedLocation()">+ Add to Shelf</button>
             
             <div style="margin-bottom:15px;">
+                <span id="nav-hint" style="font-size:0.5rem; color:var(--text); display:block; margin-bottom:4px; opacity:0;">Address copied! Paste in app.</span>
                 <span style="font-size:0.65rem; color:var(--gold); text-decoration:underline; cursor:pointer;" onclick="openCitymapper()">Consult Citymapper →</span>
             </div>
 
@@ -162,13 +163,23 @@
             document.getElementById('result-box').style.display = 'block';
         }
 
-        function openCitymapper() {
+        async function openCitymapper() {
             const addr = document.getElementById('dest-address').value;
             if(addr) {
+                // STEP 1: Copy to clipboard immediately
+                try {
+                    await navigator.clipboard.writeText(addr);
+                    document.getElementById('nav-hint').style.opacity = 1;
+                } catch (err) { console.log("Clipboard fail"); }
+
+                // STEP 2: Attempt the deep link
                 const encoded = encodeURIComponent(addr);
-                // THE ULTIMATE NAVIGATION HANDOFF
-                // This specific format forces Citymapper to resolve the address immediately.
                 window.location.href = `citymapper://directions?endaddress=${encoded}&endname=Destination`;
+                
+                // STEP 3: Fallback to web link after a short delay
+                setTimeout(() => {
+                    window.location.href = `https://citymapper.com/directions?endaddress=${encoded}`;
+                }, 800);
             } else {
                 window.location.href = `citymapper://`;
             }
@@ -192,7 +203,10 @@
             const saved = JSON.parse(localStorage.getItem('gothic_dests') || '[]');
             saved.forEach(loc => {
                 const chip = document.createElement('div'); chip.className = 'dest-chip'; chip.innerText = loc;
-                chip.onclick = () => document.getElementById('dest-address').value = loc;
+                chip.onclick = () => {
+                    document.getElementById('dest-address').value = loc;
+                    document.getElementById('nav-hint').style.opacity = 0;
+                };
                 chip.oncontextmenu = (e) => { e.preventDefault(); let s = saved.filter(i => i !== loc); localStorage.setItem('gothic_dests', JSON.stringify(s)); renderSavedShelf(); };
                 shelf.appendChild(chip);
             });
@@ -212,7 +226,7 @@
                     const cover = r.imgUrl ? `<img src="${r.imgUrl}">` : `<div style="color:var(--gold)">${r.type === 'folder' ? 'F' : 'R'}</div>`;
                     wrap.innerHTML = `<div class="${frameClass}">${cover}</div><span class="relic-name">${r.name}</span>`;
                     wrap.onclick = () => {
-                        if(isEditMode) return; // Simplified for stability
+                        if(isEditMode) return;
                         if(r.type === 'folder') enterFolder(id, r.name);
                         else if(r.url) window.open(r.url, '_blank');
                     };
