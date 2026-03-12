@@ -13,12 +13,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
     <style>
-        :root { 
-            --obsidian: #050505; 
-            --crimson: #7a0000; 
-            --gold: #8c7340; 
-            --text: #a19a89; 
-        }
+        :root { --obsidian: #050505; --crimson: #7a0000; --gold: #8c7340; --text: #a19a89; }
         
         body {
             background-color: var(--obsidian);
@@ -83,9 +78,6 @@
         #admin-desk { display: none; position: fixed; bottom: 20px; width: 90%; max-width: 300px; background: rgba(0,0,0,0.95); border: 1px solid var(--gold); padding: 15px; z-index: 4000; border-radius: 8px; }
         #context-menu { display: none; position: fixed; background: #0a0a0a; border: 1px solid var(--gold); z-index: 6000; min-width: 150px; left: 50%; top: 50%; transform: translate(-50%, -50%); }
         .menu-item { padding: 12px 18px; color: var(--gold); font-family: 'Cinzel'; font-size: 0.8rem; border-bottom: 1px solid #222; cursor: pointer; }
-
-        @keyframes wiggle { 0% { transform: rotate(-1deg); } 50% { transform: rotate(1deg); } 100% { transform: rotate(-1deg); } }
-        .wiggle-mode .relic-wrapper { animation: wiggle 0.2s infinite; }
     </style>
 </head>
 <body>
@@ -189,10 +181,11 @@
         }
 
         function openCitymapper() {
-            // FIX: Explicitly grab the current text from the input
             const addr = document.getElementById('dest-address').value;
             if(addr) {
-                window.location.href = `citymapper://directions?endaddress=${encodeURIComponent(addr)}`;
+                // Enhanced Deep Link for better clipboard/handover behavior
+                const encoded = encodeURIComponent(addr);
+                window.location.href = `citymapper://directions?endaddress=${encoded}&endname=Destination`;
             } else {
                 window.location.href = `citymapper://`;
             }
