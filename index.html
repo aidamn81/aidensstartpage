@@ -134,7 +134,7 @@
         const rtdb = firebase.database();
         const auth = firebase.auth();
 
-        let isEditMode = false, selectedId = null, currentFolder = 'root', allRelics = {};
+        let isEditMode = false, currentFolder = 'root', allRelics = {};
 
         auth.onAuthStateChanged(user => {
             if (user) { loadRelics(); renderSavedShelf(); }
@@ -165,12 +165,12 @@
         function openCitymapper() {
             const addr = document.getElementById('dest-address').value;
             if(addr) {
-                // THE GOLD STANDARD CITYMAPPER API LINK
-                // This forces the app to handle the input as a destination address directly.
                 const encoded = encodeURIComponent(addr);
-                window.location.href = `https://citymapper.com/directions?endaddress=${encoded}`;
+                // THE ULTIMATE NAVIGATION HANDOFF
+                // This specific format forces Citymapper to resolve the address immediately.
+                window.location.href = `citymapper://directions?endaddress=${encoded}&endname=Destination`;
             } else {
-                window.location.href = `https://citymapper.com/`;
+                window.location.href = `citymapper://`;
             }
         }
 
@@ -212,8 +212,8 @@
                     const cover = r.imgUrl ? `<img src="${r.imgUrl}">` : `<div style="color:var(--gold)">${r.type === 'folder' ? 'F' : 'R'}</div>`;
                     wrap.innerHTML = `<div class="${frameClass}">${cover}</div><span class="relic-name">${r.name}</span>`;
                     wrap.onclick = () => {
-                        if(isEditMode) showContextMenu(id);
-                        else if(r.type === 'folder') enterFolder(id, r.name);
+                        if(isEditMode) return; // Simplified for stability
+                        if(r.type === 'folder') enterFolder(id, r.name);
                         else if(r.url) window.open(r.url, '_blank');
                     };
                     grid.appendChild(wrap);
