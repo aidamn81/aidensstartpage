@@ -7,22 +7,35 @@
     
     <link rel="apple-touch-icon" href="https://img.icons8.com/color/512/compass--v1.png">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Playfair+Display&display=swap" rel="stylesheet">
+    
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
     <style>
-        :root { --obsidian: #050505; --crimson: #7a0000; --gold: #8c7340; --text: #a19a89; }
+        :root { 
+            --obsidian: #050505; 
+            --crimson: #7a0000; 
+            --gold: #8c7340; 
+            --text: #a19a89; 
+        }
         
         body {
             background-color: var(--obsidian);
             background-image: linear-gradient(rgba(0,0,0,0.97), rgba(0,0,0,0.97)), 
                               url('https://www.transparenttextures.com/patterns/dark-brick-wall.png');
-            color: var(--text); font-family: 'Playfair Display', serif;
-            margin: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center;
-            overflow-x: hidden; padding-bottom: 50px;
+            color: var(--text); 
+            font-family: 'Playfair Display', serif;
+            margin: 0; 
+            min-height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center;
+            overflow-x: hidden; 
+            padding-bottom: 60px;
         }
 
+        /* Fixed Top Navigation */
         #top-controls { 
             width: 100%; padding: 15px 20px; display: flex; justify-content: space-between; 
             align-items: center; border-bottom: 1px solid #1a1a1a; background: #000; 
@@ -30,6 +43,7 @@
             padding-top: env(safe-area-inset-top, 20px);
         }
 
+        /* Tool Panel Container */
         #tool-nexus-top {
             position: fixed; top: 75px; left: 50%; transform: translateX(-50%);
             z-index: 2500; display: flex; flex-direction: column; align-items: center;
@@ -46,7 +60,7 @@
         }
         .ritual-tool.expanded { max-height: 600px; opacity: 1; padding: 15px; }
 
-        /* iPhone Grid Match */
+        /* The 4-Column iPhone Grid */
         #archive-grid { 
             display: grid; padding: 165px 15px 40px; 
             grid-template-columns: repeat(4, 1fr); 
@@ -58,9 +72,11 @@
             #archive-grid { grid-template-columns: repeat(auto-fill, 80px); gap: 30px 20px; max-width: 95vw; justify-content: start; }
         }
 
+        /* Relic & Folder Styling */
         .relic-wrapper { display: flex; flex-direction: column; align-items: center; width: 100%; cursor: pointer; user-select: none; }
         .relic-frame, .folder-frame { width: 64px; height: 64px; position: relative; border-radius: 14px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #000; }
 
+        /* Crimson Gothic Folder Frame */
         .folder-frame::before {
             content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='2' y='2' width='60' height='60' rx='12' fill='none' stroke='%237a0000' stroke-width='3'/%3E%3Crect x='5' y='5' width='54' height='54' rx='10' fill='none' stroke='%238c7340' stroke-width='1.5'/%3E%3C/svg%3E");
@@ -70,20 +86,22 @@
         .relic-frame img, .folder-frame img { width: 100%; height: 100%; object-fit: cover; }
         .relic-name { margin-top: 6px; font-family: 'Cinzel'; font-size: 0.65rem; color: #fff; text-align: center; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-        /* UI Styling */
-        .time-input { background: #111; border: 1px solid #333; color: #fff; padding: 12px; width: 100%; box-sizing: border-box; font-size: 0.9rem; margin-bottom: 8px; border-radius: 6px; }
+        /* Input & UI Elements */
+        .time-input { background: #111; border: 1px solid #333; color: #fff; padding: 12px; width: 100%; box-sizing: border-box; font-size: 0.9rem; margin-bottom: 8px; border-radius: 6px; outline: none; }
         .calc-btn { background: var(--crimson); color: white; border: none; padding: 12px; width: 100%; cursor: pointer; font-family: 'Cinzel'; font-size: 0.8rem; border-radius: 6px; }
         .toggle-btn { background: #000; border: 1px solid var(--gold); color: var(--gold); padding: 8px 16px; font-family: 'Cinzel'; font-size: 0.75rem; cursor: pointer; border-radius: 6px; }
         .active-tool { background: var(--gold) !important; color: #000 !important; }
         .retract-btn { background: transparent; border: none; color: #666; font-size: 0.65rem; margin-top: 15px; text-decoration: underline; cursor: pointer; font-family: 'Cinzel'; }
 
+        /* Oracle Results */
         .result-panel { margin-top: 10px; padding: 12px; border: 1px dashed var(--crimson); background: rgba(122, 0, 0, 0.15); border-radius: 6px; }
         #saved-shelf { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; justify-content: center; }
         .dest-chip { background: #1a1a1a; border: 1px solid var(--gold); color: var(--gold); padding: 5px 10px; font-size: 0.6rem; cursor: pointer; border-radius: 4px; }
         
-        #admin-desk { display: none; position: fixed; bottom: 20px; width: 90%; max-width: 300px; background: rgba(0,0,0,0.95); border: 1px solid var(--gold); padding: 15px; z-index: 4000; border-radius: 8px; }
-        #context-menu { display: none; position: fixed; background: #0a0a0a; border: 1px solid var(--gold); z-index: 6000; min-width: 150px; left: 50%; top: 50%; transform: translate(-50%, -50%); }
-        .menu-item { padding: 12px 18px; color: var(--gold); font-family: 'Cinzel'; font-size: 0.8rem; border-bottom: 1px solid #222; cursor: pointer; }
+        /* Edit Panels */
+        #admin-desk { display: none; position: fixed; bottom: 20px; width: 90%; max-width: 300px; background: rgba(0,0,0,0.95); border: 1px solid var(--gold); padding: 15px; z-index: 4000; border-radius: 8px; box-shadow: 0 0 30px #000; }
+        #context-menu { display: none; position: fixed; background: #0a0a0a; border: 1px solid var(--gold); z-index: 6000; min-width: 150px; left: 50%; top: 50%; transform: translate(-50%, -50%); box-shadow: 0 0 50px #000; }
+        .menu-item { padding: 12px 18px; color: var(--gold); font-family: 'Cinzel'; font-size: 0.8rem; border-bottom: 1px solid #222; cursor: pointer; text-align: center; }
 
         @keyframes wiggle { 0% { transform: rotate(-1deg); } 50% { transform: rotate(1deg); } 100% { transform: rotate(-1deg); } }
         .wiggle-mode .relic-wrapper { animation: wiggle 0.2s infinite; }
@@ -112,7 +130,7 @@
             <button class="toggle-btn" style="width:100%; margin-bottom:10px; font-size:0.6rem" onclick="addSavedLocation()">+ Add to Shelf</button>
             
             <div style="margin-bottom:15px;">
-                <span id="citymapper-ritual" style="font-size:0.65rem; color:var(--gold); text-decoration:underline; cursor:pointer;" onclick="openCitymapper()">Consult Citymapper →</span>
+                <span style="font-size:0.65rem; color:var(--gold); text-decoration:underline; cursor:pointer;" onclick="openCitymapper()">Consult Citymapper →</span>
             </div>
 
             <input type="number" id="travel-time" class="time-input" value="45" placeholder="Travel Mins">
@@ -148,12 +166,8 @@
 
     <div id="context-menu">
         <div class="menu-item" onclick="menuAction('edit')">Rename</div>
-        <div class="menu-item" onclick="triggerImageUpdate()">Update Image</div>
-        <div class="menu-item" onclick="showMoveMenu()">Move</div>
-        <div class="menu-item" onclick="menuAction('delete')" style="color:var(--crimson);">Purge</div>
+        <div class="menu-item" onclick="menuAction('delete')" style="color:var(--crimson);">Purge Relic</div>
     </div>
-    <div id="move-menu" style="display:none; position:fixed; z-index:6001; background:#000; border:1px solid var(--gold);"></div>
-    <input type="file" id="relic-update-file" style="display:none">
 
     <script>
         const firebaseConfig = {
@@ -162,18 +176,30 @@
             databaseURL: "https://aidenstartpage-default-rtdb.europe-west1.firebasedatabase.app",
             projectId: "aidenstartpage"
         };
+        
         firebase.initializeApp(firebaseConfig);
         const rtdb = firebase.database();
         const auth = firebase.auth();
 
         let isEditMode = false, selectedId = null, currentFolder = 'root', allRelics = {};
 
-        window.onload = () => { loadRelics(); renderSavedShelf(); auth.signInAnonymously(); };
+        // Self-Healing Auth Protocol
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                console.log("Portal Secure.");
+                loadRelics(); 
+                renderSavedShelf();
+            } else {
+                console.log("Initiating Anonymous Ritual...");
+                auth.signInAnonymously().catch(err => console.error("Auth Failed:", err));
+            }
+        });
 
         function toggleTool(id, btn) {
             const tool = document.getElementById(id);
             const isOpen = tool.classList.contains('expanded');
-            closeAllTools();
+            document.querySelectorAll('.ritual-tool').forEach(t => t.classList.remove('expanded'));
+            document.querySelectorAll('.tool-trigger-row .toggle-btn').forEach(b => b.classList.remove('active-tool'));
             if(!isOpen) { tool.classList.add('expanded'); btn.classList.add('active-tool'); }
         }
 
@@ -182,6 +208,7 @@
             document.querySelectorAll('.tool-trigger-row .toggle-btn').forEach(b => b.classList.remove('active-tool'));
         }
 
+        // Oracle Calculations
         function calculateOracle() {
             const start = document.getElementById('work-start').value;
             const travel = parseInt(document.getElementById('travel-time').value) || 0;
@@ -196,10 +223,8 @@
         }
 
         function openCitymapper() {
-            const address = document.getElementById('dest-address').value;
-            // Citymapper deep link: if no address, it opens the app. If address exists, it initiates directions.
-            const url = address ? `citymapper://directions?endaddress=${encodeURIComponent(address)}` : `citymapper://`;
-            window.location.href = url;
+            const addr = document.getElementById('dest-address').value;
+            window.location.href = addr ? `citymapper://directions?endaddress=${encodeURIComponent(addr)}` : `citymapper://`;
         }
 
         function calculatePerc() {
@@ -209,6 +234,7 @@
             document.getElementById('perc-result-box').style.display = 'block';
         }
 
+        // Saved Shelf Logic
         function addSavedLocation() {
             const dest = document.getElementById('dest-address').value; if(!dest) return;
             let saved = JSON.parse(localStorage.getItem('gothic_dests') || '[]');
@@ -226,6 +252,7 @@
             });
         }
 
+        // Data Management
         function loadRelics() {
             rtdb.ref('relics').on('value', snap => {
                 allRelics = snap.val() || {};
@@ -243,7 +270,7 @@
                     wrap.onclick = () => {
                         if(isEditMode) showContextMenu(id);
                         else if(r.type === 'folder') enterFolder(id, r.name);
-                        else window.open(r.url, '_blank');
+                        else if(r.url) window.open(r.url, '_blank');
                     };
                     grid.appendChild(wrap);
                 });
@@ -266,17 +293,19 @@
             if(f) { const r = new FileReader(); r.onload = (e) => push(e.target.result); r.readAsDataURL(f); } else push("");
         };
 
-        function showContextMenu(id) {
-            selectedId = id; document.getElementById('context-menu').style.display = 'block';
-        }
-
+        function showContextMenu(id) { selectedId = id; document.getElementById('context-menu').style.display = 'block'; }
+        
         function menuAction(action) {
             if(action === 'delete' && confirm("Purge this relic?")) rtdb.ref('relics/'+selectedId).remove();
-            if(action === 'edit') { const n = prompt("New Name:", allRelics[selectedId].name); if(n) rtdb.ref('relics/'+selectedId).update({name: n}); }
+            if(action === 'edit') { const n = prompt("Rename:", allRelics[selectedId].name); if(n) rtdb.ref('relics/'+selectedId).update({name: n}); }
             document.getElementById('context-menu').style.display = 'none';
         }
 
-        window.onclick = (e) => { if(!e.target.closest('.relic-wrapper') && !e.target.closest('#context-menu') && !e.target.closest('.toggle-btn')) document.getElementById('context-menu').style.display = 'none'; };
+        window.onclick = (e) => { 
+            if(!e.target.closest('.relic-wrapper') && !e.target.closest('#context-menu') && !e.target.closest('.toggle-btn')) {
+                document.getElementById('context-menu').style.display = 'none'; 
+            }
+        };
     </script>
 </body>
 </html>
