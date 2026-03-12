@@ -74,10 +74,6 @@
         .result-panel { margin-top: 10px; padding: 12px; border: 1px dashed var(--crimson); background: rgba(122, 0, 0, 0.15); border-radius: 6px; }
         #saved-shelf { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; justify-content: center; }
         .dest-chip { background: #1a1a1a; border: 1px solid var(--gold); color: var(--gold); padding: 5px 10px; font-size: 0.6rem; cursor: pointer; border-radius: 4px; }
-        
-        #admin-desk { display: none; position: fixed; bottom: 20px; width: 90%; max-width: 300px; background: rgba(0,0,0,0.95); border: 1px solid var(--gold); padding: 15px; z-index: 4000; border-radius: 8px; }
-        #context-menu { display: none; position: fixed; background: #0a0a0a; border: 1px solid var(--gold); z-index: 6000; min-width: 150px; left: 50%; top: 50%; transform: translate(-50%, -50%); }
-        .menu-item { padding: 12px 18px; color: var(--gold); font-family: 'Cinzel'; font-size: 0.8rem; border-bottom: 1px solid #222; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -128,7 +124,6 @@
     <main id="archive-grid"></main>
 
     <script>
-        // CONFIG & INITIALIZATION
         const firebaseConfig = {
             apiKey: "AIzaSyAuNbY1Xv_ZF3kJah20qqPBz-IiiMAR9gE",
             authDomain: "aidenstartpage.firebaseapp.com",
@@ -146,7 +141,6 @@
             else { auth.signInAnonymously(); }
         });
 
-        // TOOL UI LOGIC
         function toggleTool(id, btn) {
             const tool = document.getElementById(id);
             const isOpen = tool.classList.contains('expanded');
@@ -171,11 +165,12 @@
         function openCitymapper() {
             const addr = document.getElementById('dest-address').value;
             if(addr) {
-                // FIXED DEEP LINK: Using the 'go' parameter forces the app to treat it as a direct command
+                // THE GOLD STANDARD CITYMAPPER API LINK
+                // This forces the app to handle the input as a destination address directly.
                 const encoded = encodeURIComponent(addr);
-                window.location.href = `citymapper://go?endaddress=${encoded}&endname=Destination`;
+                window.location.href = `https://citymapper.com/directions?endaddress=${encoded}`;
             } else {
-                window.location.href = `citymapper://`;
+                window.location.href = `https://citymapper.com/`;
             }
         }
 
@@ -186,7 +181,6 @@
             document.getElementById('perc-result-box').style.display = 'block';
         }
 
-        // SHELF LOGIC
         function addSavedLocation() {
             const dest = document.getElementById('dest-address').value; if(!dest) return;
             let saved = JSON.parse(localStorage.getItem('gothic_dests') || '[]');
@@ -204,7 +198,6 @@
             });
         }
 
-        // RELIC GRID LOGIC
         function loadRelics() {
             rtdb.ref('relics').on('value', snap => {
                 allRelics = snap.val() || {};
@@ -221,7 +214,7 @@
                     wrap.onclick = () => {
                         if(isEditMode) showContextMenu(id);
                         else if(r.type === 'folder') enterFolder(id, r.name);
-                        else window.open(r.url, '_blank');
+                        else if(r.url) window.open(r.url, '_blank');
                     };
                     grid.appendChild(wrap);
                 });
@@ -231,7 +224,10 @@
         function enterFolder(id, name) { currentFolder = id; document.getElementById('status-text').innerText = name; document.getElementById('back-btn').style.display = 'block'; loadRelics(); }
         function goBack() { currentFolder = 'root'; document.getElementById('status-text').innerText = "Gothic Archive"; document.getElementById('back-btn').style.display = 'none'; loadRelics(); }
 
-        window.onclick = (e) => { if(!e.target.closest('.relic-wrapper') && !e.target.closest('#context-menu') && !e.target.closest('.toggle-btn')) document.getElementById('context-menu').style.display = 'none'; };
+        document.getElementById('edit-toggle').onclick = () => {
+            isEditMode = !isEditMode;
+            document.getElementById('edit-toggle').innerText = isEditMode ? "Lock" : "Edit";
+        };
     </script>
 </body>
 </html>
