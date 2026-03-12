@@ -83,7 +83,7 @@
     <div id="top-controls">
         <div style="display:flex; align-items:center;">
             <button id="back-btn" class="toggle-btn" style="display:none; margin-right:10px;" onclick="goBack()">←</button>
-            <span id="status-text" style="font-family:'Cinzel'; font-size:0.8rem; color:var(--gold);">Loading...</span>
+            <span id="status-text" style="font-family:'Cinzel'; font-size:0.8rem; color:var(--gold);">Gothic Archive</span>
         </div>
         <button id="edit-toggle" class="toggle-btn">Edit</button>
     </div>
@@ -100,7 +100,7 @@
             <input type="text" id="dest-address" class="time-input" placeholder="Postcode / Address">
             <button class="toggle-btn" style="width:100%; margin-bottom:10px; font-size:0.6rem" onclick="addSavedLocation()">+ Add to Shelf</button>
             
-            <div style="margin-bottom:15px; display: flex; justify-content: center; gap: 10px;">
+            <div style="margin-bottom:15px; display: flex; justify-content: center; gap: 15px;">
                 <span style="font-size:0.65rem; color:var(--gold); text-decoration:underline; cursor:pointer;" onclick="openCitymapper()">Citymapper →</span>
                 <span style="font-size:0.65rem; color:var(--gold); text-decoration:underline; cursor:pointer;" onclick="openGoogleMaps()">Google Maps →</span>
             </div>
@@ -148,18 +148,11 @@
 
         let isEditMode = false, currentFolder = 'root', allRelics = {};
 
-        // INITIALIZATION
         auth.onAuthStateChanged(user => {
-            if (user) { 
-                document.getElementById('status-text').innerText = "Gothic Archive";
-                loadRelics(); 
-                renderSavedShelf(); 
-            } else { 
-                auth.signInAnonymously(); 
-            }
+            if (user) { loadRelics(); renderSavedShelf(); }
+            else { auth.signInAnonymously(); }
         });
 
-        // TOOLS
         function toggleTool(id, btn) {
             const tool = document.getElementById(id);
             const isOpen = tool.classList.contains('expanded');
@@ -185,8 +178,9 @@
             const addr = document.getElementById('dest-address').value;
             if(addr) {
                 const encoded = encodeURIComponent(addr);
-                window.location.href = `citymapper://directions?endaddress=${encoded}`;
-                setTimeout(() => { window.location.href = `https://citymapper.com/directions?endaddress=${encoded}`; }, 800);
+                // Enhanced protocol: Includes current location as start
+                window.location.href = `citymapper://directions?endaddress=${encoded}&startcoord=current-location`;
+                setTimeout(() => { window.location.href = `https://citymapper.com/directions?endaddress=${encoded}`; }, 1000);
             }
         }
 
@@ -195,7 +189,7 @@
             if(addr) {
                 const encoded = encodeURIComponent(addr);
                 window.location.href = `comgooglemaps://?daddr=${encoded}&directionsmode=transit`;
-                setTimeout(() => { window.location.href = `https://www.google.com/maps/dir/?api=1&destination=${encoded}`; }, 800);
+                setTimeout(() => { window.location.href = `https://www.google.com/maps/dir/?api=1&destination=${encoded}&travelmode=transit`; }, 1000);
             }
         }
 
@@ -206,7 +200,6 @@
             document.getElementById('perc-result-box').style.display = 'block';
         }
 
-        // DATABASE LOADING
         function loadRelics() {
             rtdb.ref('relics').on('value', snap => {
                 allRelics = snap.val() || {};
@@ -217,31 +210,19 @@
         function renderGrid() {
             const grid = document.getElementById('archive-grid');
             grid.innerHTML = '';
-            
-            const items = Object.keys(allRelics)
-                .filter(id => allRelics[id].parent === currentFolder)
+            const items = Object.keys(allRelics).filter(id => allRelics[id].parent === currentFolder)
                 .sort((a,b) => (allRelics[a].sortOrder || 0) - (allRelics[b].sortOrder || 0));
-
-            if (items.length === 0) {
-                grid.innerHTML = '<div style="grid-column: 1/5; font-size: 0.7rem; opacity: 0.5;">Empty Ritual...</div>';
-            }
 
             items.forEach(id => {
                 const r = allRelics[id];
-                const wrap = document.createElement('div');
-                wrap.className = 'relic-wrapper';
+                const wrap = document.createElement('div'); wrap.className = 'relic-wrapper';
                 const frameClass = r.type === 'folder' ? 'folder-frame' : 'relic-frame';
                 const cover = r.imgUrl ? `<img src="${r.imgUrl}">` : `<div style="color:var(--gold)">${r.type === 'folder' ? 'F' : 'R'}</div>`;
-                
                 wrap.innerHTML = `<div class="${frameClass}">${cover}</div><span class="relic-name">${r.name}</span>`;
-                
                 wrap.onclick = () => {
-                    if(isEditMode) {
-                        if(confirm("Purge this item?")) rtdb.ref('relics/' + id).remove();
-                    } else {
-                        if(r.type === 'folder') enterFolder(id, r.name);
-                        else window.open(r.url, '_blank');
-                    }
+                    if(isEditMode) { if(confirm("Purge relic?")) rtdb.ref('relics/' + id).remove(); }
+                    else if(r.type === 'folder') enterFolder(id, r.name);
+                    else if(r.url) window.open(r.url, '_blank');
                 };
                 grid.appendChild(wrap);
             });
@@ -250,7 +231,6 @@
         function enterFolder(id, name) { currentFolder = id; document.getElementById('status-text').innerText = name; document.getElementById('back-btn').style.display = 'block'; renderGrid(); }
         function goBack() { currentFolder = 'root'; document.getElementById('status-text').innerText = "Gothic Archive"; document.getElementById('back-btn').style.display = 'none'; renderGrid(); }
 
-        // ADMIN LOGIC
         document.getElementById('edit-toggle').onclick = () => {
             isEditMode = !isEditMode;
             document.getElementById('edit-toggle').innerText = isEditMode ? "Lock" : "Edit";
