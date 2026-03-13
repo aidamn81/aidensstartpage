@@ -34,7 +34,7 @@
         #tool-nexus-top {
             position: fixed; top: 75px; left: 50%; transform: translateX(-50%);
             z-index: 2500; display: flex; flex-direction: column; align-items: center;
-            width: 90%; max-width: 400px; box-sizing: border-box;
+            width: 95%; max-width: 800px; box-sizing: border-box;
         }
 
         .tool-trigger-row { display: flex; gap: 8px; justify-content: center; width: 100%; }
@@ -45,18 +45,24 @@
             width: 100%; font-family: 'Cinzel', serif; color: var(--gold); 
             box-shadow: 0 10px 40px #000; text-align: center; margin-top: 5px; border-radius: 8px;
         }
-        .ritual-tool.expanded { max-height: 600px; opacity: 1; padding: 15px; }
+        .ritual-tool.expanded { max-height: 700px; opacity: 1; padding: 15px; }
 
+        /* GRID LOGIC: 4 on iPhone, 8 on iPad */
         #archive-grid { 
-            display: grid; padding: 175px 15px 40px; 
+            display: grid; padding: 185px 10px 40px; 
             grid-template-columns: repeat(4, 1fr); 
-            gap: 20px 10px; width: 100%; max-width: 500px;
+            gap: 25px 10px; width: 100%; max-width: 900px;
             justify-items: center; box-sizing: border-box;
         }
 
+        @media (min-width: 768px) {
+            #archive-grid { grid-template-columns: repeat(8, 1fr); padding-top: 170px; }
+        }
+
         .relic-wrapper { display: flex; flex-direction: column; align-items: center; width: 100%; cursor: pointer; user-select: none; transition: transform 0.2s; position: relative; }
-        .relic-wrapper.dragging { opacity: 0.5; transform: scale(0.9); }
-        .relic-frame, .folder-frame { width: 64px; height: 64px; position: relative; border-radius: 14px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #000; pointer-events: none; }
+        .relic-frame, .folder-frame { width: 60px; height: 60px; position: relative; border-radius: 12px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #000; pointer-events: none; }
+        
+        @media (min-width: 768px) { .relic-frame, .folder-frame { width: 70px; height: 70px; } }
 
         .folder-frame::before {
             content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
@@ -65,12 +71,14 @@
         }
 
         .relic-frame img, .folder-frame img { width: 100%; height: 100%; object-fit: cover; }
-        .relic-name { margin-top: 6px; font-family: 'Cinzel'; font-size: 0.65rem; color: #fff; text-align: center; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .relic-name { margin-top: 6px; font-family: 'Cinzel'; font-size: 0.6rem; color: #fff; text-align: center; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
         .time-input { background: #111; border: 1px solid #333; color: #fff; padding: 12px; width: 100%; box-sizing: border-box; font-size: 0.9rem; margin-bottom: 8px; border-radius: 6px; outline: none; }
         .calc-btn { background: var(--crimson); color: white; border: none; padding: 12px; width: 100%; cursor: pointer; font-family: 'Cinzel'; font-size: 0.8rem; border-radius: 6px; }
         .toggle-btn { background: #000; border: 1px solid var(--gold); color: var(--gold); padding: 8px 16px; font-family: 'Cinzel'; font-size: 0.75rem; cursor: pointer; border-radius: 6px; }
-        .active-tool { background: var(--gold) !important; color: #000 !important; }
+        
+        .checkbox-container { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 12px; font-size: 0.75rem; color: var(--gold); }
+        input[type="checkbox"] { accent-color: var(--crimson); transform: scale(1.2); }
 
         #admin-desk { display: none; position: fixed; bottom: 20px; width: 90%; max-width: 320px; background: rgba(0,0,0,0.95); border: 1px solid var(--gold); padding: 15px; z-index: 4000; border-radius: 8px; left: 50%; transform: translateX(-50%); }
     </style>
@@ -92,19 +100,27 @@
         </div>
 
         <div id="time-widget" class="ritual-tool">
-            <div id="saved-shelf"></div>
+            <div id="saved-shelf" style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:10px; justify-content:center;"></div>
             <input type="time" id="work-start" class="time-input" value="09:00">
             <input type="text" id="dest-address" class="time-input" placeholder="Address">
+            
+            <label class="checkbox-container">
+                <input type="checkbox" id="prep-toggle"> Add 2h Ritual Prep
+            </label>
+
             <button class="toggle-btn" style="width:100%; margin-bottom:10px; font-size:0.6rem" onclick="addSavedLocation()">+ Add to Shelf</button>
+            
             <div style="margin-bottom:15px; display: flex; justify-content: center; gap: 15px;">
                 <span style="font-size:0.65rem; color:var(--gold); text-decoration:underline; cursor:pointer;" onclick="openCitymapper()">Citymapper →</span>
                 <span style="font-size:0.65rem; color:var(--gold); text-decoration:underline; cursor:pointer;" onclick="openGoogleMaps()">Google Maps →</span>
             </div>
-            <input type="number" id="travel-time" class="time-input" value="45">
+
+            <input type="number" id="travel-time" class="time-input" value="45" placeholder="Travel Mins">
             <button class="calc-btn" onclick="calculateOracle()">Consult Oracle</button>
+            
             <div id="result-box" class="result-panel" style="display:none; margin-top:10px; padding:10px; border:1px dashed var(--gold);">
-                <div id="leave-time" style="font-size:1.4rem; color:var(--gold);">--:--</div>
-                <div id="prep-time" style="font-size:0.75rem;">--:--</div>
+                <div id="leave-time" style="font-size:1.4rem; font-weight:bold; color:var(--gold);">--:--</div>
+                <div id="prep-time-display" style="font-size:0.75rem; color:#fff; opacity:0.8; margin-top:5px;">--:--</div>
             </div>
         </div>
 
@@ -113,7 +129,7 @@
             <input type="number" id="perc-num" class="time-input" value="20">
             <button class="calc-btn" onclick="calculatePerc()">Calculate Ritual</button>
             <div id="perc-result-box" class="result-panel" style="display:none; margin-top:10px; padding:10px; border:1px dashed var(--gold);">
-                <span id="perc-total" style="font-size:1.4rem;">0</span>
+                <span id="perc-total" style="font-size:1.4rem; color:#fff;">0</span>
             </div>
         </div>
     </div>
@@ -129,6 +145,7 @@
     </section>
 
     <script>
+        // Firebase Config (Preserved)
         const firebaseConfig = {
             apiKey: "AIzaSyAuNbY1Xv_ZF3kJah20qqPBz-IiiMAR9gE",
             authDomain: "aidenstartpage.firebaseapp.com",
@@ -139,8 +156,7 @@
         const rtdb = firebase.database();
         const auth = firebase.auth();
 
-        let isEditMode = false, currentFolder = 'root', allRelics = {};
-        let pressTimer, draggedId = null;
+        let isEditMode = false, currentFolder = 'root', allRelics = {}, pressTimer;
 
         auth.onAuthStateChanged(user => { if (user) { loadRelics(); renderSavedShelf(); } else { auth.signInAnonymously(); } });
 
@@ -161,54 +177,59 @@
                 const r = allRelics[id];
                 const wrap = document.createElement('div');
                 wrap.className = 'relic-wrapper';
-                wrap.draggable = isEditMode;
                 const frameClass = r.type === 'folder' ? 'folder-frame' : 'relic-frame';
                 const cover = r.imgUrl ? `<img src="${r.imgUrl}">` : `<div style="color:var(--gold)">${r.type === 'folder' ? 'F' : 'R'}</div>`;
                 
                 wrap.innerHTML = `<div class="${frameClass}">${cover}</div><span class="relic-name">${r.name}</span>`;
                 
-                // Interaction Handlers
-                wrap.ontouchstart = (e) => startPress(e, id, r);
+                wrap.ontouchstart = (e) => { pressTimer = setTimeout(() => handleLongPress(id, r), 800); };
                 wrap.ontouchend = () => clearTimeout(pressTimer);
-                wrap.onmousedown = (e) => startPress(e, id, r);
-                wrap.onmouseup = () => clearTimeout(pressTimer);
-
+                
                 wrap.onclick = () => {
-                    if(!isEditMode) {
-                        if(r.type === 'folder') enterFolder(id, r.name);
-                        else if(r.url) window.open(r.url, '_blank');
-                    }
+                    if(isEditMode) return;
+                    if(r.type === 'folder') enterFolder(id, r.name);
+                    else if(r.url) window.open(r.url, '_blank');
                 };
-
-                // Drag Logic
-                wrap.ondragstart = () => { draggedId = id; wrap.classList.add('dragging'); };
-                wrap.ondragend = () => { wrap.classList.remove('dragging'); draggedId = null; };
-                wrap.ondragover = (e) => e.preventDefault();
-                wrap.ondrop = () => handleDrop(id);
-
                 grid.appendChild(wrap);
             });
         }
 
-        function startPress(e, id, relic) {
-            clearTimeout(pressTimer);
-            pressTimer = setTimeout(() => {
-                if(isEditMode) {
-                    const action = confirm("Purge this item? (Cancel for Rename/Move)");
-                    if(action) rtdb.ref('relics/' + id).remove();
-                    else {
-                        const newName = prompt("New Name:", relic.name);
-                        const newUrl = prompt("New URL:", relic.url || "");
-                        if(newName) rtdb.ref('relics/' + id).update({ name: newName, url: newUrl });
-                    }
-                }
-            }, 800);
+        function handleLongPress(id, relic) {
+            if(!isEditMode) return;
+            const action = confirm("Delete this relic? (Cancel to Rename)");
+            if(action) rtdb.ref('relics/' + id).remove();
+            else {
+                const n = prompt("New Name:", relic.name);
+                if(n) rtdb.ref('relics/' + id).update({ name: n });
+            }
         }
 
-        function handleDrop(targetId) {
-            if (!draggedId || draggedId === targetId) return;
-            const targetOrder = allRelics[targetId].sortOrder || 0;
-            rtdb.ref('relics/' + draggedId).update({ sortOrder: targetOrder - 1 });
+        function calculateOracle() {
+            const start = document.getElementById('work-start').value;
+            const travel = parseInt(document.getElementById('travel-time').value) || 0;
+            const needsPrep = document.getElementById('prep-toggle').checked;
+            
+            if(!start) return;
+            const [h, m] = start.split(':').map(Number);
+            let workTime = new Date(); workTime.setHours(h, m, 0, 0);
+            
+            // Standard Arrival (2 hours before start)
+            let arrivalTime = new Date(workTime.getTime() - (120 * 60000));
+            
+            // If Prep is checked, Leave time must be travel time BEFORE that arrival
+            let leaveTime = new Date(arrivalTime.getTime() - (travel * 60000));
+            
+            // If Prep is checked, Wake/Prep starts 2 hours before Leave time
+            let wakeTime = new Date(leaveTime.getTime() - (120 * 60000));
+
+            document.getElementById('leave-time').innerText = "Depart: " + leaveTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false});
+            
+            if(needsPrep) {
+                document.getElementById('prep-time-display').innerHTML = `Arrive: ${arrivalTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}<br><b>Prep Start: ${wakeTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</b>`;
+            } else {
+                document.getElementById('prep-time-display').innerText = "Arrive: " + arrivalTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false});
+            }
+            document.getElementById('result-box').style.display = 'block';
         }
 
         function toggleTool(id, btn) {
@@ -225,8 +246,48 @@
             isEditMode = !isEditMode;
             document.getElementById('edit-toggle').innerText = isEditMode ? "Lock" : "Edit";
             document.getElementById('admin-desk').style.display = isEditMode ? 'block' : 'none';
-            renderGrid();
         };
+
+        function addSavedLocation() {
+            const d = document.getElementById('dest-address').value; if(!d) return;
+            let s = JSON.parse(localStorage.getItem('gothic_dests') || '[]');
+            if(!s.includes(d)) { s.push(d); localStorage.setItem('gothic_dests', JSON.stringify(s)); renderSavedShelf(); }
+        }
+
+        function renderSavedShelf() {
+            const sh = document.getElementById('saved-shelf'); sh.innerHTML = '';
+            const s = JSON.parse(localStorage.getItem('gothic_dests') || '[]');
+            s.forEach(l => {
+                const c = document.createElement('div'); c.className = 'dest-chip'; 
+                c.style = "background:#1a1a1a; border:1px solid var(--gold); color:var(--gold); padding:5px 10px; font-size:0.6rem; cursor:pointer; border-radius:4px;";
+                c.innerText = l; c.onclick = () => document.getElementById('dest-address').value = l; sh.appendChild(c);
+            });
+        }
+
+        function calculatePerc() {
+            const v = parseFloat(document.getElementById('perc-val').value) || 0;
+            const p = parseFloat(document.getElementById('perc-num').value) || 0;
+            document.getElementById('perc-total').innerText = ((p / 100) * v).toLocaleString();
+            document.getElementById('perc-result-box').style.display = 'block';
+        }
+
+        function openCitymapper() {
+            const a = document.getElementById('dest-address').value;
+            if(a) {
+                const e = encodeURIComponent(a);
+                window.location.href = `citymapper://directions?endaddress=${e}`;
+                setTimeout(() => { window.location.href = `https://citymapper.com/directions?endaddress=${e}`; }, 1000);
+            }
+        }
+
+        function openGoogleMaps() {
+            const a = document.getElementById('dest-address').value;
+            if(a) {
+                const e = encodeURIComponent(a);
+                window.location.href = `comgooglemaps://?daddr=${e}&directionsmode=transit`;
+                setTimeout(() => { window.location.href = `https://www.google.com/maps/dir/?api=1&destination=${e}&travelmode=transit`; }, 1000);
+            }
+        }
 
         document.getElementById('r-save').onclick = () => {
             const n = document.getElementById('r-name').value, u = document.getElementById('r-url').value, t = document.getElementById('r-type').value, f = document.getElementById('r-file').files[0];
@@ -234,14 +295,6 @@
             const push = (img) => rtdb.ref('relics').push({ name: n, url: u, type: t, imgUrl: img || '', parent: currentFolder, sortOrder: Date.now() });
             if(f) { const r = new FileReader(); r.onload = (e) => push(e.target.result); r.readAsDataURL(f); } else push("");
         };
-
-        // Standard helpers (Oracle, Saved Shelf, Navigation) preserved as in previous version
-        function calculateOracle() { const s = document.getElementById('work-start').value; const t = parseInt(document.getElementById('travel-time').value) || 0; if(!s) return; const [h, m] = s.split(':').map(Number); let wt = new Date(); wt.setHours(h, m, 0, 0); let at = new Date(wt.getTime() - (120 * 60000)); let lt = new Date(at.getTime() - (t * 60000)); document.getElementById('leave-time').innerText = "Depart: " + lt.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false}); document.getElementById('prep-time').innerText = "Arrive: " + at.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false}); document.getElementById('result-box').style.display = 'block'; }
-        function calculatePerc() { const v = parseFloat(document.getElementById('perc-val').value) || 0; const p = parseFloat(document.getElementById('perc-num').value) || 0; document.getElementById('perc-total').innerText = ((p / 100) * v).toLocaleString(); document.getElementById('perc-result-box').style.display = 'block'; }
-        function openCitymapper() { const a = document.getElementById('dest-address').value; if(a) { const e = encodeURIComponent(a); window.location.href = `citymapper://directions?endaddress=${e}`; setTimeout(() => { window.location.href = `https://citymapper.com/directions?endaddress=${e}`; }, 1000); } }
-        function openGoogleMaps() { const a = document.getElementById('dest-address').value; if(a) { const e = encodeURIComponent(a); window.location.href = `comgooglemaps://?daddr=${e}&directionsmode=transit`; setTimeout(() => { window.location.href = `https://www.google.com/maps/dir/?api=1&destination=${e}&travelmode=transit`; }, 1000); } }
-        function addSavedLocation() { const d = document.getElementById('dest-address').value; if(!d) return; let s = JSON.parse(localStorage.getItem('gothic_dests') || '[]'); if(!s.includes(d)) { s.push(d); localStorage.setItem('gothic_dests', JSON.stringify(s)); renderSavedShelf(); } }
-        function renderSavedShelf() { const sh = document.getElementById('saved-shelf'); sh.innerHTML = ''; const s = JSON.parse(localStorage.getItem('gothic_dests') || '[]'); s.forEach(l => { const c = document.createElement('div'); c.className = 'dest-chip'; c.innerText = l; c.onclick = () => document.getElementById('dest-address').value = l; sh.appendChild(c); }); }
     </script>
 </body>
 </html>
