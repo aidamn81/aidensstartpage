@@ -3,163 +3,225 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Relic & Folder Manager</title>
+    <title>Relic & Folder System</title>
     <style>
         :root {
-            --bg-color: #f4f4f9;
-            --folder-color: #ffd966;
-            --relic-color: #a4c2f4;
-            --accent-color: #4a90e2;
+            --bg: #1a1a1a;
+            --folder-bg: #2c2c2c;
+            --relic-bg: #3d3d3d;
+            --accent: #007aff;
+            --text: #ffffff;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             display: flex;
             flex-wrap: wrap;
             gap: 20px;
-            padding: 40px;
-        }
-
-        .item {
-            width: 120px;
-            height: 140px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            cursor: grab;
-            transition: transform 0.2s;
+            padding: 30px;
             user-select: none;
         }
 
-        .icon {
-            width: 80px;
-            height: 80px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        /* Container Item */
+        .grid-item {
+            width: 110px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            cursor: grab;
+            transition: transform 0.2s;
+        }
+
+        /* The Visual "Icon" */
+        .icon-box {
+            width: 90px;
+            height: 90px;
+            border-radius: 20px;
             background-size: cover;
             background-position: center;
+            background-color: var(--relic-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
             margin-bottom: 8px;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            pointer-events: none; /* Let drag events hit the parent */
         }
 
-        .folder .icon { background-color: var(--folder-color); }
-        .relic .icon { background-color: var(--relic-color); }
+        .folder .icon-box {
+            background-color: var(--folder-bg);
+            border: 2px solid #444;
+        }
 
         .label {
-            font-size: 14px;
-            font-weight: 500;
+            font-size: 13px;
             text-align: center;
             width: 100%;
+            white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            white-space: nowrap;
         }
 
-        /* The Wiggle Effect */
+        /* Dragging & Wiggling */
+        .dragging {
+            opacity: 0.5;
+            transform: scale(1.1);
+        }
+
         .wiggle {
-            animation: wiggle 0.3s infinite;
+            animation: wiggleAnim 0.3s infinite;
         }
 
-        @keyframes wiggle {
-            0% { transform: rotate(-2deg); }
-            50% { transform: rotate(2deg); }
-            100% { transform: rotate(-2deg); }
+        @keyframes wiggleAnim {
+            0% { transform: rotate(-1.5deg); }
+            50% { transform: rotate(1.5deg); }
+            100% { transform: rotate(-1.5deg); }
         }
 
-        /* Context Menu Styling */
-        .menu {
-            position: absolute;
-            background: white;
-            border: 1px solid #ccc;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            z-index: 100;
-            display: none;
+        /* Folder Hover State */
+        .folder-hover {
+            transform: scale(1.15);
+            border-color: var(--accent) !important;
+        }
+
+        /* Menu Bar / Controls */
+        #contextMenu {
+            position: fixed;
+            background: #252525;
+            border: 1px solid #444;
             border-radius: 8px;
-            overflow: hidden;
+            padding: 5px 0;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
         }
 
-        .menu-item {
+        .menu-btn {
             padding: 10px 20px;
             cursor: pointer;
             font-size: 14px;
+            color: #eee;
         }
 
-        .menu-item:hover { background-color: #eee; }
-        .menu-item.delete { color: red; }
+        .menu-btn:hover { background: var(--accent); }
+        .menu-btn.del { color: #ff453a; }
 
     </style>
 </head>
 <body>
 
-    <div class="item folder" draggable="true" oncontextmenu="showMenu(event, this)">
-        <div class="icon"></div>
+    <div class="grid-item folder" draggable="true" data-id="1">
+        <div class="icon-box">📂</div>
         <div class="label">Work Folder</div>
     </div>
 
-    <div class="item relic" draggable="true" oncontextmenu="showMenu(event, this)">
-        <div class="icon"></div>
+    <div class="grid-item relic" draggable="true" data-id="2">
+        <div class="icon-box">📄</div>
         <div class="label">Project Alpha</div>
     </div>
 
-    <div id="contextMenu" class="menu">
-        <div class="menu-item" onclick="changeCover()">Change Cover Image</div>
-        <div class="menu-item" onclick="renameItem()">Rename</div>
-        <div class="menu-item delete" onclick="deleteWithConfirmation()">Delete</div>
+    <div class="grid-item relic" draggable="true" data-id="3">
+        <div class="icon-box">🖼️</div>
+        <div class="label">Cover Art</div>
     </div>
 
-    <script>
-        let currentItem = null;
-        const menu = document.getElementById('contextMenu');
+    <div id="contextMenu">
+        <div class="menu-btn" onclick="changeCover()">Change Cover Image</div>
+        <div class="menu-btn" onclick="renameItem()">Rename</div>
+        <div class="menu-btn del" onclick="deleteItem()">Delete</div>
+    </div>
 
-        // Drag and Wiggle Logic
-        document.querySelectorAll('.item').forEach(item => {
-            item.addEventListener('dragstart', () => {
-                item.classList.add('wiggle');
-            });
+<script>
+    let draggedItem = null;
+    let contextTarget = null;
+    const menu = document.getElementById('contextMenu');
 
-            item.addEventListener('dragend', () => {
-                item.classList.remove('wiggle');
-            });
-        });
+    // --- Drag and Drop Logic ---
+    document.addEventListener('dragstart', (e) => {
+        if (e.target.classList.contains('grid-item')) {
+            draggedItem = e.target;
+            draggedItem.classList.add('dragging', 'wiggle');
+            e.dataTransfer.setData('text/plain', ''); // Required for Firefox
+        }
+    });
 
-        // Context Menu Controls
-        function showMenu(e, element) {
+    document.addEventListener('dragend', (e) => {
+        if (draggedItem) {
+            draggedItem.classList.remove('dragging', 'wiggle');
+            draggedItem = null;
+        }
+        document.querySelectorAll('.folder').forEach(f => f.classList.remove('folder-hover'));
+    });
+
+    document.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        const target = e.target.closest('.folder');
+        
+        // Visual feedback when hovering a folder
+        document.querySelectorAll('.folder').forEach(f => f.classList.remove('folder-hover'));
+        if (target && target !== draggedItem) {
+            target.classList.add('folder-hover');
+        }
+    });
+
+    document.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const dropTarget = e.target.closest('.grid-item');
+        
+        if (draggedItem && dropTarget && dropTarget !== draggedItem) {
+            if (dropTarget.classList.contains('folder')) {
+                // Drop inside folder logic
+                alert(`Moved "${draggedItem.innerText.trim()}" into "${dropTarget.innerText.trim()}"`);
+                draggedItem.remove();
+            } else {
+                // Swap/Reorder logic
+                const parent = dropTarget.parentNode;
+                parent.insertBefore(draggedItem, dropTarget.nextSibling);
+            }
+        }
+    });
+
+    // --- Options / Actions Logic ---
+    window.addEventListener('contextmenu', (e) => {
+        const target = e.target.closest('.grid-item');
+        if (target) {
             e.preventDefault();
-            currentItem = element;
+            contextTarget = target;
             menu.style.display = 'block';
             menu.style.left = e.pageX + 'px';
             menu.style.top = e.pageY + 'px';
         }
+    });
 
-        window.onclick = () => menu.style.display = 'none';
+    window.addEventListener('click', () => {
+        menu.style.display = 'none';
+    });
 
-        function renameItem() {
-            const newName = prompt("Enter new name:", currentItem.querySelector('.label').innerText);
-            if (newName) currentItem.querySelector('.label').innerText = newName;
+    function renameItem() {
+        const label = contextTarget.querySelector('.label');
+        const newName = prompt("Rename to:", label.innerText);
+        if (newName) label.innerText = newName;
+    }
+
+    function changeCover() {
+        const icon = contextTarget.querySelector('.icon-box');
+        const url = prompt("Paste Image URL:");
+        if (url) {
+            icon.innerText = ""; // Remove emoji
+            icon.style.backgroundImage = `url('${url}')`;
         }
+    }
 
-        function changeCover() {
-            const url = prompt("Enter Image URL:");
-            if (url) currentItem.querySelector('.icon').style.backgroundImage = `url('${url}')`;
+    function deleteItem() {
+        if (confirm("Are you sure you want to delete this?")) {
+            contextTarget.remove();
         }
+    }
+</script>
 
-        function deleteWithConfirmation() {
-            if (confirm("Are you sure you want to delete this? This action cannot be undone.")) {
-                currentItem.remove();
-            }
-        }
-
-        // Basic Drag & Drop Sort (Placeholder for logic)
-        document.addEventListener('dragover', (e) => e.preventDefault());
-        document.addEventListener('drop', (e) => {
-            const dragging = document.querySelector('.wiggle');
-            if (dragging) {
-                // Logic to append to new position or into folder
-                console.log("Item dropped");
-            }
-        });
-    </script>
 </body>
 </html>
