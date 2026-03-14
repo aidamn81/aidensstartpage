@@ -58,22 +58,28 @@
             #archive-grid { grid-template-columns: repeat(8, 1fr); padding-top: 170px; }
         }
 
-        .relic-wrapper { display: flex; flex-direction: column; align-items: center; width: 100%; cursor: pointer; user-select: none; transition: transform 0.2s; position: relative; }
-        
-        /* Drag & Wiggle */
-        .relic-wrapper.dragging { opacity: 0.5; }
-        .relic-wrapper.wiggle { animation: wiggle 0.3s infinite; }
-        @keyframes wiggle {
+        .relic-wrapper { 
+            display: flex; flex-direction: column; align-items: center; 
+            width: 100%; cursor: pointer; user-select: none; 
+            transition: transform 0.2s, opacity 0.2s; position: relative; 
+        }
+
+        /* Edit Mode Styles */
+        .wiggle { animation: wiggleAnim 0.3s infinite; }
+        @keyframes wiggleAnim {
             0% { transform: rotate(-1deg); }
             50% { transform: rotate(1deg); }
             100% { transform: rotate(-1deg); }
         }
 
-        .relic-frame, .folder-frame { width: 60px; height: 60px; position: relative; border-radius: 12px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #000; pointer-events: none; border: 1px solid transparent; }
-        
-        /* Hover Target state */
-        .relic-wrapper.drop-target .folder-frame { border: 2px solid var(--gold); transform: scale(1.1); }
+        .dragging { opacity: 0.4; transform: scale(1.1); }
 
+        .relic-frame, .folder-frame { 
+            width: 60px; height: 60px; position: relative; border-radius: 12px; 
+            overflow: hidden; display: flex; align-items: center; justify-content: center; 
+            background: #000; pointer-events: none; border: 1px solid transparent; 
+        }
+        
         @media (min-width: 768px) { .relic-frame, .folder-frame { width: 70px; height: 70px; } }
 
         .folder-frame::before {
@@ -112,21 +118,16 @@
             <div id="saved-shelf" style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:10px; justify-content:center;"></div>
             <input type="time" id="work-start" class="time-input" value="09:00">
             <input type="text" id="dest-address" class="time-input" placeholder="Address">
-            
             <label style="display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:12px; font-size:0.75rem; color:var(--gold);">
                 <input type="checkbox" id="prep-toggle"> Add 2h Ritual Prep
             </label>
-
             <button class="toggle-btn" style="width:100%; margin-bottom:10px; font-size:0.6rem" onclick="addSavedLocation()">+ Add to Shelf</button>
-            
             <div style="margin-bottom:15px; display: flex; justify-content: center; gap: 15px;">
                 <span style="font-size:0.65rem; color:var(--gold); text-decoration:underline; cursor:pointer;" onclick="openCitymapper()">Citymapper →</span>
                 <span style="font-size:0.65rem; color:var(--gold); text-decoration:underline; cursor:pointer;" onclick="openGoogleMaps()">Google Maps →</span>
             </div>
-
             <input type="number" id="travel-time" class="time-input" value="45" placeholder="Travel Mins">
             <button class="calc-btn" onclick="calculateOracle()">Consult Oracle</button>
-            
             <div id="result-box" style="display:none; margin-top:10px; padding:10px; border:1px dashed var(--gold);">
                 <div id="leave-time" style="font-size:1.4rem; font-weight:bold; color:var(--gold);">--:--</div>
                 <div id="prep-time-display" style="font-size:0.75rem; color:#fff; opacity:0.8; margin-top:5px;">--:--</div>
@@ -164,7 +165,7 @@
         const rtdb = firebase.database();
         const auth = firebase.auth();
 
-        let isEditMode = false, currentFolder = 'root', allRelics = {}, pressTimer, draggedId = null;
+        let isEditMode = false, currentFolder = 'root', allRelics = {}, lastTap = 0, draggedId = null;
 
         auth.onAuthStateChanged(user => { if (user) { loadRelics(); renderSavedShelf(); } else { auth.signInAnonymously(); } });
 
@@ -186,62 +187,80 @@
                 const wrap = document.createElement('div');
                 wrap.className = 'relic-wrapper' + (isEditMode ? ' wiggle' : '');
                 wrap.draggable = isEditMode;
+                wrap.dataset.id = id;
                 
                 const frameClass = r.type === 'folder' ? 'folder-frame' : 'relic-frame';
                 const cover = r.imgUrl ? `<img src="${r.imgUrl}">` : `<div style="color:var(--gold)">${r.type === 'folder' ? 'F' : 'R'}</div>`;
                 
                 wrap.innerHTML = `<div class="${frameClass}">${cover}</div><span class="relic-name">${r.name}</span>`;
                 
-                // Interaction Logic
-                wrap.ontouchstart = (e) => { if(isEditMode) pressTimer = setTimeout(() => handleOptions(id, r), 700); };
-                wrap.ontouchend = () => clearTimeout(pressTimer);
-                wrap.oncontextmenu = (e) => { if(isEditMode) { e.preventDefault(); handleOptions(id, r); } };
-                
-                wrap.onclick = () => {
-                    if(isEditMode) return;
-                    if(r.type === 'folder') enterFolder(id, r.name);
-                    else if(r.url) window.open(r.url, '_blank');
-                };
-
-                // Drag Logic
-                wrap.ondragstart = (e) => { 
-                    draggedId = id; 
-                    wrap.classList.add('dragging'); 
-                };
-                wrap.ondragend = () => { 
-                    wrap.classList.remove('dragging'); 
-                    document.querySelectorAll('.relic-wrapper').forEach(el => el.classList.remove('drop-target'));
-                };
-                wrap.ondragover = (e) => { 
-                    e.preventDefault(); 
-                    if(r.type === 'folder' && id !== draggedId) wrap.classList.add('drop-target'); 
-                };
-                wrap.ondragleave = () => wrap.classList.remove('drop-target');
-                wrap.ondrop = (e) => {
-                    e.preventDefault();
-                    if(r.type === 'folder' && draggedId !== id) {
-                        rtdb.ref(`relics/${draggedId}`).update({ parent: id });
+                // --- Double Tap & Click Interaction ---
+                wrap.addEventListener('click', (e) => {
+                    const now = Date.now();
+                    if (isEditMode && now - lastTap < 300) {
+                        handleOptions(id, r);
+                    } else {
+                        if(!isEditMode) {
+                            if(r.type === 'folder') enterFolder(id, r.name);
+                            else if(r.url) window.open(r.url, '_blank');
+                        }
                     }
-                };
+                    lastTap = now;
+                });
+
+                // --- Drag and Place Logic ---
+                wrap.addEventListener('dragstart', (e) => {
+                    draggedId = id;
+                    wrap.classList.add('dragging');
+                });
+
+                wrap.addEventListener('dragend', () => {
+                    wrap.classList.remove('dragging');
+                    draggedId = null;
+                });
+
+                wrap.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    const target = e.target.closest('.relic-wrapper');
+                    if (target && target !== wrap) {
+                        const rect = target.getBoundingClientRect();
+                        const next = (e.clientX - rect.left) > (rect.width / 2);
+                        grid.insertBefore(wrap, next ? target.nextSibling : target);
+                    }
+                });
+
+                wrap.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    saveOrder();
+                });
 
                 grid.appendChild(wrap);
             });
         }
 
+        function saveOrder() {
+            const gridItems = document.querySelectorAll('.relic-wrapper');
+            gridItems.forEach((el, index) => {
+                const id = el.dataset.id;
+                rtdb.ref(`relics/${id}`).update({ sortOrder: index });
+            });
+        }
+
         function handleOptions(id, relic) {
-            const act = prompt(`Modify ${relic.name}:\n1: Rename\n2: Cover Image URL\n3: Delete\n(Type number)`);
+            const act = prompt(`Modify ${relic.name}:\n1: Rename\n2: Upload/Change Cover URL\n3: Delete\n(Type number)`);
             if(!act) return;
             if(act === '1') {
                 const n = prompt("New Name:", relic.name);
                 if(n) rtdb.ref('relics/' + id).update({ name: n });
             } else if(act === '2') {
-                const u = prompt("Image URL:");
+                const u = prompt("Paste Cover Image URL:");
                 if(u) rtdb.ref('relics/' + id).update({ imgUrl: u });
             } else if(act === '3') {
-                if(confirm("Bury this relic forever?")) rtdb.ref('relics/' + id).remove();
+                if(confirm("Are you sure you want to delete this?")) rtdb.ref('relics/' + id).remove();
             }
         }
 
+        // --- Tools & Navigation ---
         function toggleTool(id, btn) {
             const tool = document.getElementById(id);
             const isOpen = tool.classList.contains('expanded');
@@ -266,7 +285,7 @@
             if(f) { const r = new FileReader(); r.onload = (e) => push(e.target.result); r.readAsDataURL(f); } else push("");
         };
 
-        // Preserved Oracle & Calculator Logic
+        // --- Calculation Preserved ---
         function calculateOracle() {
             const start = document.getElementById('work-start').value;
             const travel = parseInt(document.getElementById('travel-time').value) || 0;
@@ -285,30 +304,19 @@
             }
             document.getElementById('result-box').style.display = 'block';
         }
-
         function calculatePerc() {
             const v = parseFloat(document.getElementById('perc-val').value) || 0;
             const p = parseFloat(document.getElementById('perc-num').value) || 0;
             document.getElementById('perc-total').innerText = ((p / 100) * v).toLocaleString();
             document.getElementById('perc-result-box').style.display = 'block';
         }
-
-        function openCitymapper() {
-            const a = document.getElementById('dest-address').value;
-            if(a) window.location.href = `citymapper://directions?endaddress=${encodeURIComponent(a)}`;
-        }
-
-        function openGoogleMaps() {
-            const a = document.getElementById('dest-address').value;
-            if(a) window.location.href = `comgooglemaps://?daddr=${encodeURIComponent(a)}&directionsmode=transit`;
-        }
-
+        function openCitymapper() { const a = document.getElementById('dest-address').value; if(a) window.location.href = `citymapper://directions?endaddress=${encodeURIComponent(a)}`; }
+        function openGoogleMaps() { const a = document.getElementById('dest-address').value; if(a) window.location.href = `comgooglemaps://?daddr=${encodeURIComponent(a)}&directionsmode=transit`; }
         function addSavedLocation() {
             const d = document.getElementById('dest-address').value; if(!d) return;
             let s = JSON.parse(localStorage.getItem('gothic_dests') || '[]');
             if(!s.includes(d)) { s.push(d); localStorage.setItem('gothic_dests', JSON.stringify(s)); renderSavedShelf(); }
         }
-
         function renderSavedShelf() {
             const sh = document.getElementById('saved-shelf'); sh.innerHTML = '';
             const s = JSON.parse(localStorage.getItem('gothic_dests') || '[]');
