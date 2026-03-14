@@ -58,27 +58,18 @@
             #archive-grid { grid-template-columns: repeat(8, 1fr); padding-top: 170px; }
         }
 
-        .relic-wrapper { 
-            display: flex; flex-direction: column; align-items: center; 
-            width: 100%; cursor: pointer; user-select: none; 
-            transition: transform 0.2s, opacity 0.2s; position: relative; 
-        }
-
-        /* Edit Mode Styles */
+        .relic-wrapper { display: flex; flex-direction: column; align-items: center; width: 100%; cursor: pointer; user-select: none; transition: transform 0.2s; position: relative; }
+        
+        /* Edit Mode Visuals */
         .wiggle { animation: wiggleAnim 0.3s infinite; }
         @keyframes wiggleAnim {
             0% { transform: rotate(-1deg); }
             50% { transform: rotate(1deg); }
             100% { transform: rotate(-1deg); }
         }
+        .dragging { opacity: 0.3; transform: scale(0.9); }
 
-        .dragging { opacity: 0.4; transform: scale(1.1); }
-
-        .relic-frame, .folder-frame { 
-            width: 60px; height: 60px; position: relative; border-radius: 12px; 
-            overflow: hidden; display: flex; align-items: center; justify-content: center; 
-            background: #000; pointer-events: none; border: 1px solid transparent; 
-        }
+        .relic-frame, .folder-frame { width: 60px; height: 60px; position: relative; border-radius: 12px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #000; pointer-events: none; }
         
         @media (min-width: 768px) { .relic-frame, .folder-frame { width: 70px; height: 70px; } }
 
@@ -191,58 +182,64 @@
                 
                 const frameClass = r.type === 'folder' ? 'folder-frame' : 'relic-frame';
                 const cover = r.imgUrl ? `<img src="${r.imgUrl}">` : `<div style="color:var(--gold)">${r.type === 'folder' ? 'F' : 'R'}</div>`;
-                
                 wrap.innerHTML = `<div class="${frameClass}">${cover}</div><span class="relic-name">${r.name}</span>`;
                 
-                // --- Double Tap & Click Interaction ---
+                // Double Tap (Menu) & Single Click (Navigate)
                 wrap.addEventListener('click', (e) => {
                     const now = Date.now();
                     if (isEditMode && now - lastTap < 300) {
                         handleOptions(id, r);
-                    } else {
-                        if(!isEditMode) {
-                            if(r.type === 'folder') enterFolder(id, r.name);
-                            else if(r.url) window.open(r.url, '_blank');
-                        }
+                    } else if (!isEditMode) {
+                        if(r.type === 'folder') enterFolder(id, r.name);
+                        else if(r.url) window.open(r.url, '_blank');
                     }
                     lastTap = now;
                 });
 
-                // --- Drag and Place Logic ---
+                // Grab & Drag Logic
                 wrap.addEventListener('dragstart', (e) => {
                     draggedId = id;
-                    wrap.classList.add('dragging');
+                    setTimeout(() => wrap.classList.add('dragging'), 0);
                 });
 
                 wrap.addEventListener('dragend', () => {
                     wrap.classList.remove('dragging');
-                    draggedId = null;
+                    saveNewOrder();
                 });
 
                 wrap.addEventListener('dragover', (e) => {
                     e.preventDefault();
-                    const target = e.target.closest('.relic-wrapper');
-                    if (target && target !== wrap) {
-                        const rect = target.getBoundingClientRect();
-                        const next = (e.clientX - rect.left) > (rect.width / 2);
-                        grid.insertBefore(wrap, next ? target.nextSibling : target);
+                    const afterElement = getDragAfterElement(grid, e.clientX, e.clientY);
+                    if (afterElement == null) {
+                        grid.appendChild(wrap);
+                    } else {
+                        grid.insertBefore(wrap, afterElement);
                     }
-                });
-
-                wrap.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    saveOrder();
                 });
 
                 grid.appendChild(wrap);
             });
         }
 
-        function saveOrder() {
+        function getDragAfterElement(container, x, y) {
+            const draggableElements = [...container.querySelectorAll('.relic-wrapper:not(.dragging)')];
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offsetX = x - box.left - box.width / 2;
+                const offsetY = y - box.top - box.height / 2;
+                const distance = Math.sqrt(offsetX * offsetX + offsetY * offsetY);
+                if (distance < closest.distance) {
+                    return { distance: distance, element: child };
+                } else {
+                    return closest;
+                }
+            }, { distance: Number.POSITIVE_INFINITY }).element;
+        }
+
+        function saveNewOrder() {
             const gridItems = document.querySelectorAll('.relic-wrapper');
             gridItems.forEach((el, index) => {
-                const id = el.dataset.id;
-                rtdb.ref(`relics/${id}`).update({ sortOrder: index });
+                rtdb.ref(`relics/${el.dataset.id}`).update({ sortOrder: index });
             });
         }
 
@@ -256,11 +253,10 @@
                 const u = prompt("Paste Cover Image URL:");
                 if(u) rtdb.ref('relics/' + id).update({ imgUrl: u });
             } else if(act === '3') {
-                if(confirm("Are you sure you want to delete this?")) rtdb.ref('relics/' + id).remove();
+                if(confirm("Confirm Deletion?")) rtdb.ref('relics/' + id).remove();
             }
         }
 
-        // --- Tools & Navigation ---
         function toggleTool(id, btn) {
             const tool = document.getElementById(id);
             const isOpen = tool.classList.contains('expanded');
@@ -285,7 +281,7 @@
             if(f) { const r = new FileReader(); r.onload = (e) => push(e.target.result); r.readAsDataURL(f); } else push("");
         };
 
-        // --- Calculation Preserved ---
+        // Preserved Functions
         function calculateOracle() {
             const start = document.getElementById('work-start').value;
             const travel = parseInt(document.getElementById('travel-time').value) || 0;
@@ -297,11 +293,8 @@
             let leaveTime = new Date(arrivalTime.getTime() - (travel * 60000));
             let wakeTime = new Date(leaveTime.getTime() - (120 * 60000));
             document.getElementById('leave-time').innerText = "Depart: " + leaveTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false});
-            if(needsPrep) {
-                document.getElementById('prep-time-display').innerHTML = `Arrive: ${arrivalTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}<br><b>Prep Start: ${wakeTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</b>`;
-            } else {
-                document.getElementById('prep-time-display').innerText = "Arrive: " + arrivalTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false});
-            }
+            if(needsPrep) document.getElementById('prep-time-display').innerHTML = `Arrive: ${arrivalTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}<br><b>Prep Start: ${wakeTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</b>`;
+            else document.getElementById('prep-time-display').innerText = "Arrive: " + arrivalTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false});
             document.getElementById('result-box').style.display = 'block';
         }
         function calculatePerc() {
