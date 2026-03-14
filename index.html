@@ -77,6 +77,15 @@
         .relic-frame img, .folder-frame img { width: 100%; height: 100%; object-fit: cover; }
         .relic-name { margin-top: 6px; font-family: 'Cinzel'; font-size: 0.6rem; color: #fff; text-align: center; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+        /* Pop-up Menu Styling */
+        #context-menu {
+            position: fixed; display: none; background: #0a0a0a; border: 1px solid var(--gold);
+            z-index: 5000; border-radius: 8px; width: 160px; box-shadow: 0 0 20px #000; overflow: hidden;
+        }
+        .menu-item { padding: 12px; font-family: 'Cinzel'; font-size: 0.75rem; color: var(--gold); border-bottom: 1px solid #1a1a1a; text-align: center; }
+        .menu-item:last-child { border-bottom: none; }
+        .menu-item:active { background: var(--crimson); color: white; }
+
         .time-input { background: #111; border: 1px solid #333; color: #fff; padding: 12px; width: 100%; box-sizing: border-box; font-size: 0.9rem; margin-bottom: 8px; border-radius: 6px; outline: none; }
         .calc-btn { background: var(--crimson); color: white; border: none; padding: 12px; width: 100%; cursor: pointer; font-family: 'Cinzel'; font-size: 0.8rem; border-radius: 6px; }
         .toggle-btn { background: #000; border: 1px solid var(--gold); color: var(--gold); padding: 8px 16px; font-family: 'Cinzel'; font-size: 0.75rem; cursor: pointer; border-radius: 6px; }
@@ -84,7 +93,7 @@
         #admin-desk { display: none; position: fixed; bottom: 20px; width: 90%; max-width: 320px; background: rgba(0,0,0,0.95); border: 1px solid var(--gold); padding: 15px; z-index: 4000; border-radius: 8px; left: 50%; transform: translateX(-50%); }
     </style>
 </head>
-<body>
+<body onclick="closeMenu()">
 
     <div id="top-controls">
         <div style="display:flex; align-items:center;">
@@ -92,6 +101,14 @@
             <span id="status-text" style="font-family:'Cinzel'; font-size:0.8rem; color:var(--gold);">Gothic Archive</span>
         </div>
         <button id="edit-toggle" class="toggle-btn">Edit</button>
+    </div>
+
+    <input type="file" id="cover-upload" style="display:none" accept="image/*" onchange="processCoverChange(this)">
+
+    <div id="context-menu">
+        <div class="menu-item" onclick="triggerRename()">Rename</div>
+        <div class="menu-item" onclick="triggerCoverUpload()">Upload Cover</div>
+        <div class="menu-item" style="color:red" onclick="triggerDelete()">Delete</div>
     </div>
 
     <div id="tool-nexus-top">
@@ -156,7 +173,7 @@
         const rtdb = firebase.database();
         const auth = firebase.auth();
 
-        let isEditMode = false, currentFolder = 'root', allRelics = {}, lastTap = 0;
+        let isEditMode = false, currentFolder = 'root', allRelics = {}, lastTap = 0, activeItemId = null;
 
         auth.onAuthStateChanged(user => { if (user) { loadRelics(); renderSavedShelf(); } else { auth.signInAnonymously(); } });
 
@@ -186,8 +203,8 @@
                 wrap.addEventListener('pointerdown', (e) => {
                     const now = Date.now();
                     if (isEditMode && now - lastTap < 300) {
-                        e.preventDefault();
-                        handleOptions(id, r);
+                        e.preventDefault(); e.stopPropagation();
+                        openMenu(e, id);
                     } else if (!isEditMode) {
                         setTimeout(() => { if (Date.now() - now < 300) {
                             if(r.type === 'folder') enterFolder(id, r.name);
@@ -201,6 +218,41 @@
             });
         }
 
+        // --- Custom Menu Logic ---
+        function openMenu(e, id) {
+            activeItemId = id;
+            const menu = document.getElementById('context-menu');
+            menu.style.display = 'block';
+            menu.style.left = Math.min(e.clientX, window.innerWidth - 170) + 'px';
+            menu.style.top = Math.min(e.clientY, window.innerHeight - 150) + 'px';
+        }
+        function closeMenu() { document.getElementById('context-menu').style.display = 'none'; }
+        
+        function triggerRename() {
+            const old = allRelics[activeItemId].name;
+            const n = prompt("Rename Ritual:", old);
+            if(n) rtdb.ref('relics/' + activeItemId).update({ name: n });
+            closeMenu();
+        }
+
+        function triggerCoverUpload() { document.getElementById('cover-upload').click(); closeMenu(); }
+
+        function processCoverChange(input) {
+            if(!input.files[0] || !activeItemId) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                rtdb.ref('relics/' + activeItemId).update({ imgUrl: e.target.result });
+                input.value = ""; // reset
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+
+        function triggerDelete() {
+            if(confirm("Banish this relic forever?")) rtdb.ref('relics/' + activeItemId).remove();
+            closeMenu();
+        }
+
+        // --- Drag & Place Logic ---
         function handleDrag(e, el, id) {
             let grid = document.getElementById('archive-grid');
             function onMove(e) {
@@ -224,21 +276,7 @@
             window.addEventListener('pointerup', onUp);
         }
 
-        function handleOptions(id, relic) {
-            const act = prompt(`Modify ${relic.name}:\n1: Rename\n2: Update Cover (URL)\n3: Delete\n(Number)`);
-            if(!act) return;
-            if(act === '1') {
-                const n = prompt("New Name:", relic.name);
-                if(n) rtdb.ref('relics/' + id).update({ name: n });
-            } else if(act === '2') {
-                const u = prompt("Paste Cover Image URL:");
-                if(u) rtdb.ref('relics/' + id).update({ imgUrl: u });
-            } else if(act === '3') {
-                if(confirm(`Delete ${relic.name}?`)) rtdb.ref('relics/' + id).remove();
-            }
-        }
-
-        // --- Restored Oracle Logic ---
+        // --- Oracle & Utils Preserved ---
         function calculateOracle() {
             const start = document.getElementById('work-start').value;
             const travel = parseInt(document.getElementById('travel-time').value) || 0;
@@ -246,17 +284,12 @@
             if(!start) return;
             const [h, m] = start.split(':').map(Number);
             let workTime = new Date(); workTime.setHours(h, m, 0, 0);
-            
-            // Standard Departure (subtract travel from start)
             let leaveTime = new Date(workTime.getTime() - (travel * 60000));
             document.getElementById('leave-time').innerText = "Depart: " + leaveTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false});
-            
             if(needsPrep) {
                 let wakeTime = new Date(leaveTime.getTime() - (120 * 60000));
                 document.getElementById('prep-time-display').innerHTML = `<b>Prep Start: ${wakeTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', hour12:false})}</b>`;
-            } else {
-                document.getElementById('prep-time-display').innerText = "Safe Passage Assured";
-            }
+            } else { document.getElementById('prep-time-display').innerText = "Safe Passage Assured"; }
             document.getElementById('result-box').style.display = 'block';
         }
 
@@ -264,7 +297,6 @@
         function openGoogleMaps() { const a = document.getElementById('dest-address').value; if(a) window.location.href = `comgooglemaps://?daddr=${encodeURIComponent(a)}&directionsmode=transit`; }
         function openTfl() { const a = document.getElementById('dest-address').value; if(a) window.location.href = `https://tfl.gov.uk/plan-a-journey/results?to=${encodeURIComponent(a)}`; }
 
-        // --- General Utils ---
         function toggleTool(id, btn) {
             const tool = document.getElementById(id);
             const isOpen = tool.classList.contains('expanded');
