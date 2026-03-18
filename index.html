@@ -68,7 +68,7 @@
         }
         .dragging { opacity: 0.3; z-index: 1000; transform: scale(1.1); pointer-events: none; }
 
-        .relic-frame, .folder-frame { width: 60px; height: 60px; position: relative; border-radius: 12px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #000; pointer-events: none; }
+        .relic-frame, .folder-frame { width: 60px; height: 60px; position: relative; border-radius: 12px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: #000; pointer-events: none; border: 1px solid transparent; }
         .folder-frame::before {
             content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='2' y='2' width='60' height='60' rx='12' fill='none' stroke='%237a0000' stroke-width='3'/%3E%3Crect x='5' y='5' width='54' height='54' rx='10' fill='none' stroke='%238c7340' stroke-width='1.5'/%3E%3C/svg%3E");
@@ -77,12 +77,12 @@
         .relic-frame img, .folder-frame img { width: 100%; height: 100%; object-fit: cover; }
         .relic-name { margin-top: 6px; font-family: 'Cinzel'; font-size: 0.6rem; color: #fff; text-align: center; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-        /* Pop-up Menu Styling */
+        /* Pop-up Menu */
         #context-menu {
             position: fixed; display: none; background: #0a0a0a; border: 1px solid var(--gold);
-            z-index: 5000; border-radius: 8px; width: 160px; box-shadow: 0 0 20px #000; overflow: hidden;
+            z-index: 5000; border-radius: 8px; width: 160px; box-shadow: 0 0 25px #000; overflow: hidden;
         }
-        .menu-item { padding: 12px; font-family: 'Cinzel'; font-size: 0.75rem; color: var(--gold); border-bottom: 1px solid #1a1a1a; text-align: center; }
+        .menu-item { padding: 14px; font-family: 'Cinzel'; font-size: 0.75rem; color: var(--gold); border-bottom: 1px solid #1a1a1a; text-align: center; cursor: pointer; }
         .menu-item:last-child { border-bottom: none; }
         .menu-item:active { background: var(--crimson); color: white; }
 
@@ -103,12 +103,12 @@
         <button id="edit-toggle" class="toggle-btn">Edit</button>
     </div>
 
-    <input type="file" id="cover-upload" style="display:none" accept="image/*" onchange="processCoverChange(this)">
+    <input type="file" id="menu-file-input" style="display:none" accept="image/*" onchange="handleMenuFileUpload(this)">
 
     <div id="context-menu">
-        <div class="menu-item" onclick="triggerRename()">Rename</div>
-        <div class="menu-item" onclick="triggerCoverUpload()">Upload Cover</div>
-        <div class="menu-item" style="color:red" onclick="triggerDelete()">Delete</div>
+        <div class="menu-item" onclick="menuRename()">Rename</div>
+        <div class="menu-item" onclick="menuUpload()">Upload Cover</div>
+        <div class="menu-item" style="color:var(--crimson)" onclick="menuDelete()">Delete</div>
     </div>
 
     <div id="tool-nexus-top">
@@ -173,11 +173,16 @@
         const rtdb = firebase.database();
         const auth = firebase.auth();
 
-        let isEditMode = false, currentFolder = 'root', allRelics = {}, lastTap = 0, activeItemId = null;
+        let isEditMode = false, currentFolder = 'root', allRelics = {}, lastTap = 0, activeMenuId = null;
 
-        auth.onAuthStateChanged(user => { if (user) { loadRelics(); renderSavedShelf(); } else { auth.signInAnonymously(); } });
+        auth.onAuthStateChanged(user => { 
+            if (user) { loadRelics(); renderSavedShelf(); } 
+            else { auth.signInAnonymously(); } 
+        });
 
         function loadRelics() {
+            const uid = auth.currentUser ? auth.currentUser.uid : null;
+            // Filter by owner is now enforced by rules, but we listen to the path
             rtdb.ref('relics').on('value', snap => {
                 allRelics = snap.val() || {};
                 renderGrid();
@@ -187,7 +192,10 @@
         function renderGrid() {
             const grid = document.getElementById('archive-grid');
             grid.innerHTML = '';
-            const items = Object.keys(allRelics).filter(id => allRelics[id].parent === currentFolder)
+            const uid = auth.currentUser.uid;
+            
+            // Only show relics that belong to the current user
+            const items = Object.keys(allRelics).filter(id => allRelics[id].parent === currentFolder && allRelics[id].owner === uid)
                 .sort((a,b) => (allRelics[a].sortOrder || 0) - (allRelics[b].sortOrder || 0));
 
             items.forEach(id => {
@@ -202,10 +210,12 @@
                 
                 wrap.addEventListener('pointerdown', (e) => {
                     const now = Date.now();
+                    // Double Tap (Menu)
                     if (isEditMode && now - lastTap < 300) {
                         e.preventDefault(); e.stopPropagation();
-                        openMenu(e, id);
+                        showMenu(e, id);
                     } else if (!isEditMode) {
+                        // Regular Nav
                         setTimeout(() => { if (Date.now() - now < 300) {
                             if(r.type === 'folder') enterFolder(id, r.name);
                             else if(r.url) window.open(r.url, '_blank');
@@ -218,9 +228,9 @@
             });
         }
 
-        // --- Custom Menu Logic ---
-        function openMenu(e, id) {
-            activeItemId = id;
+        // --- Context Menu Functions ---
+        function showMenu(e, id) {
+            activeMenuId = id;
             const menu = document.getElementById('context-menu');
             menu.style.display = 'block';
             menu.style.left = Math.min(e.clientX, window.innerWidth - 170) + 'px';
@@ -228,31 +238,28 @@
         }
         function closeMenu() { document.getElementById('context-menu').style.display = 'none'; }
         
-        function triggerRename() {
-            const old = allRelics[activeItemId].name;
+        function menuRename() {
+            const old = allRelics[activeMenuId].name;
             const n = prompt("Rename Ritual:", old);
-            if(n) rtdb.ref('relics/' + activeItemId).update({ name: n });
+            if(n) rtdb.ref('relics/' + activeMenuId).update({ name: n });
             closeMenu();
         }
-
-        function triggerCoverUpload() { document.getElementById('cover-upload').click(); closeMenu(); }
-
-        function processCoverChange(input) {
-            if(!input.files[0] || !activeItemId) return;
+        function menuUpload() { document.getElementById('menu-file-input').click(); closeMenu(); }
+        function handleMenuFileUpload(input) {
+            if(!input.files[0] || !activeMenuId) return;
             const reader = new FileReader();
             reader.onload = (e) => {
-                rtdb.ref('relics/' + activeItemId).update({ imgUrl: e.target.result });
-                input.value = ""; // reset
+                rtdb.ref('relics/' + activeMenuId).update({ imgUrl: e.target.result });
+                input.value = "";
             };
             reader.readAsDataURL(input.files[0]);
         }
-
-        function triggerDelete() {
-            if(confirm("Banish this relic forever?")) rtdb.ref('relics/' + activeItemId).remove();
+        function menuDelete() {
+            if(confirm("Banish this relic forever?")) rtdb.ref('relics/' + activeMenuId).remove();
             closeMenu();
         }
 
-        // --- Drag & Place Logic ---
+        // --- Drag Logic ---
         function handleDrag(e, el, id) {
             let grid = document.getElementById('archive-grid');
             function onMove(e) {
@@ -276,7 +283,7 @@
             window.addEventListener('pointerup', onUp);
         }
 
-        // --- Oracle & Utils Preserved ---
+        // --- Oracle Logic ---
         function calculateOracle() {
             const start = document.getElementById('work-start').value;
             const travel = parseInt(document.getElementById('travel-time').value) || 0;
@@ -297,6 +304,7 @@
         function openGoogleMaps() { const a = document.getElementById('dest-address').value; if(a) window.location.href = `comgooglemaps://?daddr=${encodeURIComponent(a)}&directionsmode=transit`; }
         function openTfl() { const a = document.getElementById('dest-address').value; if(a) window.location.href = `https://tfl.gov.uk/plan-a-journey/results?to=${encodeURIComponent(a)}`; }
 
+        // --- General Utils ---
         function toggleTool(id, btn) {
             const tool = document.getElementById(id);
             const isOpen = tool.classList.contains('expanded');
@@ -305,18 +313,32 @@
         }
         function enterFolder(id, name) { currentFolder = id; document.getElementById('status-text').innerText = name; document.getElementById('back-btn').style.display = 'block'; renderGrid(); }
         function goBack() { currentFolder = 'root'; document.getElementById('status-text').innerText = "Gothic Archive"; document.getElementById('back-btn').style.display = 'none'; renderGrid(); }
+        
         document.getElementById('edit-toggle').onclick = () => {
             isEditMode = !isEditMode;
             document.getElementById('edit-toggle').innerText = isEditMode ? "Lock" : "Edit";
             document.getElementById('admin-desk').style.display = isEditMode ? 'block' : 'none';
             renderGrid();
         };
+
+        // --- CREATE WITH OWNER TAG ---
         document.getElementById('r-save').onclick = () => {
             const n = document.getElementById('r-name').value, u = document.getElementById('r-url').value, t = document.getElementById('r-type').value, f = document.getElementById('r-file').files[0];
-            if(!n) return;
-            const push = (img) => rtdb.ref('relics').push({ name: n, url: u, type: t, imgUrl: img || '', parent: currentFolder, sortOrder: Date.now() });
+            if(!n || !auth.currentUser) return;
+            
+            const uid = auth.currentUser.uid;
+            const push = (img) => rtdb.ref('relics').push({ 
+                name: n, 
+                url: u, 
+                type: t, 
+                imgUrl: img || '', 
+                parent: currentFolder, 
+                sortOrder: Date.now(),
+                owner: uid // SECURE TAG
+            });
             if(f) { const r = new FileReader(); r.onload = (e) => push(e.target.result); r.readAsDataURL(f); } else push("");
         };
+
         function calculatePerc() {
             const v = parseFloat(document.getElementById('perc-val').value) || 0;
             const p = parseFloat(document.getElementById('perc-num').value) || 0;
@@ -329,7 +351,8 @@
             if(!s.includes(d)) { s.push(d); localStorage.setItem('gothic_dests', JSON.stringify(s)); renderSavedShelf(); }
         }
         function renderSavedShelf() {
-            const sh = document.getElementById('saved-shelf'); sh.innerHTML = '';
+            const sh = document.getElementById('saved-shelf'); if(!sh) return;
+            sh.innerHTML = '';
             const s = JSON.parse(localStorage.getItem('gothic_dests') || '[]');
             s.forEach(l => {
                 const c = document.createElement('div');
