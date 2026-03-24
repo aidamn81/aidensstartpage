@@ -190,7 +190,6 @@
             const grid = document.getElementById('archive-grid');
             grid.innerHTML = '';
             
-            // Reverted to original filtering logic (Folder-only) to restore missing items
             const items = Object.keys(allRelics).filter(id => allRelics[id].parent === currentFolder)
                 .sort((a,b) => (allRelics[a].sortOrder || 0) - (allRelics[b].sortOrder || 0));
 
@@ -311,13 +310,15 @@
             renderGrid();
         };
 
+        // NEW SAVING LOGIC WITH OWNER ID
         document.getElementById('r-save').onclick = () => {
             const n = document.getElementById('r-name').value, u = document.getElementById('r-url').value, t = document.getElementById('r-type').value, f = document.getElementById('r-file').files[0];
             if(!n || !auth.currentUser) return;
             const uid = auth.currentUser.uid;
             const push = (img) => rtdb.ref('relics').push({ 
                 name: n, url: u, type: t, imgUrl: img || '', 
-                parent: currentFolder, sortOrder: Date.now(), owner: uid 
+                parent: currentFolder, sortOrder: Date.now(), 
+                owner: uid // Tagging the creator
             });
             if(f) { const r = new FileReader(); r.onload = (e) => push(e.target.result); r.readAsDataURL(f); } else push("");
         };
